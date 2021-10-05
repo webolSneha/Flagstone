@@ -195,7 +195,7 @@ if (have_posts()) : while (have_posts()) : the_post();
 			    <br class="clear"/>
 			    
 			    <?php
-			    	$tg_blog_display_full = kirki_get_option('tg_blog_display_full');
+			    	$tg_blog_display_full = get_theme_mod('tg_blog_display_full');
 			    	
 			    	if(!empty($tg_blog_display_full))
 			    	{

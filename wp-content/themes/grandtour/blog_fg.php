@@ -206,7 +206,7 @@ if($post_counter == 1)
 			    <br class="clear"/>
 			    
 			    <?php
-			    	$tg_blog_display_full = kirki_get_option('tg_blog_display_full');
+			    	$tg_blog_display_full = get_theme_mod('tg_blog_display_full');
 			    	
 			    	if(!empty($tg_blog_display_full))
 			    	{

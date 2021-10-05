@@ -8,7 +8,7 @@
 get_header();
 
 //Include post featured slider
-$tg_blog_slider_layout = kirki_get_option('tg_blog_slider_layout');
+$tg_blog_slider_layout = get_theme_mod('tg_blog_slider_layout');
 
 if(GRANDTOUR_THEMEDEMO && isset($_GET['slider']))
 {
@@ -130,7 +130,7 @@ if (have_posts()) : while (have_posts()) : the_post();
 			    <br class="clear"/>
 			    
 			    <?php
-			    	$tg_blog_display_full = kirki_get_option('tg_blog_display_full');
+			    	$tg_blog_display_full = get_theme_mod('tg_blog_display_full');
 			    	
 			    	if(!empty($tg_blog_display_full))
 			    	{

@@ -5,7 +5,7 @@
 		<a id="close_mobile_menu" href="javascript:;"><span class="ti-close"></span></a>
 		<?php
 			//get custom logo
-		    $tg_retina_logo = kirki_get_option('tg_retina_logo');
+		    $tg_retina_logo = get_theme_mod('tg_retina_logo');
 	
 		    if(!empty($tg_retina_logo))
 		    {	
@@ -55,7 +55,7 @@
 			$tg_menu_layout = grandtour_menu_layout();
 	    
 		    //Check if display search in header	
-		    $tg_menu_search = kirki_get_option('tg_menu_search');
+		    $tg_menu_search = get_theme_mod('tg_menu_search');
 		    if($tg_menu_layout == 'leftmenu')
 		    {
 	    	    $tg_menu_search = 0;
@@ -177,7 +177,7 @@
 	    
 	    <?php
 			//Check if open link in new window
-			$tg_footer_social_link = kirki_get_option('tg_footer_social_link');
+			$tg_footer_social_link = get_theme_mod('tg_footer_social_link');
 		?>
 			<div class="social_wrapper">
 			    <ul>
@@ -326,7 +326,7 @@
 			    
 			    <?php
 			    	//Display copyright text
-			        $tg_footer_copyright_text = kirki_get_option('tg_footer_copyright_text');
+			        $tg_footer_copyright_text = get_theme_mod('tg_footer_copyright_text');
 		
 			        if(!empty($tg_footer_copyright_text))
 			        {

@@ -18,7 +18,7 @@ $page_title = get_the_title();
 $page_menu_transparent = 0;
 
 //Get tour header option
-$tg_tour_single_header = kirki_get_option('tg_tour_single_header');
+$tg_tour_single_header = get_theme_mod('tg_tour_single_header');
 
 if(has_post_thumbnail($current_page_id, 'original') && !empty($tg_tour_single_header))
 {
@@ -62,7 +62,7 @@ if(has_post_thumbnail($current_page_id, 'original') && !empty($tg_tour_single_he
 <div id="page_caption" class="<?php if(!empty($pp_page_bg)) { ?>hasbg parallax<?php } ?> <?php if(!empty($grandtour_topbar)) { ?>withtopbar<?php } ?> <?php if(!empty($grandtour_screen_class)) { ?>split<?php } ?>" <?php if(!empty($pp_page_bg)) { ?>style="background-image:url(<?php echo esc_url($pp_page_bg); ?>);"<?php } ?> <?php if($tour_header_type == 'Youtube Video' OR $tour_header_type == 'Vimeo Video') { ?>data-jarallax-video="<?php echo esc_url($video_url); ?>"<?php } ?>>
 	<?php
 		//Check page title vertical alignment
-		$tg_page_title_vertical_alignment = kirki_get_option('tg_page_title_vertical_alignment');
+		$tg_page_title_vertical_alignment = get_theme_mod('tg_page_title_vertical_alignment');
 		if($tg_page_title_vertical_alignment == 'center')
 		{	
 	?>

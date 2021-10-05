@@ -24,7 +24,7 @@ if(!defined('ABSPATH')) exit();
 					<div id="add_skin_color" class="basic_action_button layerinput autosize rightbutton"><i class="material-icons">color_lens</i><?php _e('Add Skin', 'revslider');?></div><div class="tp-clearfix"></div>
 					<div class="div40"></div>
 					<div class="global_sas_wrap">
-						<label_a style="max-width:none; width:auto;"><?php _e('Show this Modal on Editor launch', 'revslider');?></label_a><input type="checkbox" id="sr_show_glob_skins" class="sliderinput easyinit" data-r="skins.colorsAtStart" checked="checked">
+						<label_a style="max-width:none; width:auto;"><?php _e('Show this Modal on Editor launch', 'revslider');?></label_a><input type="checkbox" id="sr_show_glob_skins" class="sliderinput easyinit" data-r="skins.colorsAtStart">
 					</div>
 				</div>
 			</div>
@@ -70,19 +70,19 @@ if(!defined('ABSPATH')) exit();
 						</div>			
 						<div class="mcg_option_third_wraps">
 							<div class="st_slider mcg_guide_optionwrap mcg_option_third">
-								<input data-unavailable=".standardunavailable" data-available=".standardavailable" data-disable=".standarddisable" data-enable=".standardenable" data-select=".st_slider" data-unselect=".st_scene, .st_carousel" data-r="type" data-evt="updatesliderlayout"  data-evtparam="slidertype" type="radio" value="standard" name="slidertype_guide" class="sliderinput" data-show="" data-hide="">
+								<input data-unavailable=".standardunavailable" data-available=".standardavailable" data-disable=".standarddisable" data-enable=".standardenable" data-select=".st_slider" data-unselect=".st_scene, .st_carousel" data-r="type" data-evt="updatesliderlayout"  data-evtparam="slidertype" type="radio" value="standard" id="slidertype_guide_standard" name="slidertype_guide" class="sliderinput easyinit" data-show="" data-hide="">
 								<mcg_guide_image class="guide_slider"></mcg_guide_image>
 								<div class="mcg_o_title"><?php _e('Slider');?></div>
 								<div class="mcg_o_descp"><?php _e('A Slider consists of multiple Slides.<br>Each Slide has its own content and can be<br>navigated to with various optional<br>navigation elements.');?></div>
 							</div>
 							<div class="st_scene mcg_guide_optionwrap mcg_option_third">
-								<input data-unavailable=".sceneunavailable" data-available=".sceneavailable" data-disable=".herodisable" data-enable=".heroenable" data-select=".st_scene" data-unselect=".st_slider, .st_carousel" data-r="type" data-evt="updatesliderlayout" data-evtparam="slidertype" type="radio" value="hero" name="slidertype_guide" class="sliderinput" data-show="" data-hide="">
+								<input data-unavailable=".sceneunavailable" data-available=".sceneavailable" data-disable=".herodisable" data-enable=".heroenable" data-select=".st_scene" data-unselect=".st_slider, .st_carousel" data-r="type" data-evt="updatesliderlayout" data-evtparam="slidertype" type="radio" value="hero" id="slidertype_guide_hero"  name="slidertype_guide" class="sliderinput easyinit" data-show="" data-hide="">
 								<mcg_guide_image class="guide_scene"></mcg_guide_image>
 								<div class="mcg_o_title"><?php _e('Scene');?></div>
 								<div class="mcg_o_descp"><?php _e('A Scene is essentially a Slider with a single<br>Slide and no navigation elements.<br>Best used for content modules that require<br>no additional depth.');?></div>
 							</div>
 							<div class="st_carousel mcg_guide_optionwrap mcg_option_third last">
-								<input data-unavailable=".carouselunavailable" data-available=".carouselavailable" data-disable=".carouseldisable" data-enable=".carouselenable" data-select=".st_carousel" data-unselect=".st_slider, .st_scene" data-r="type" data-evt="updatesliderlayout"  data-evtparam="slidertype" type="radio" value="carousel" name="slidertype_guide" class="sliderinput" data-show="" data-hide="">
+								<input data-unavailable=".carouselunavailable" data-available=".carouselavailable" data-disable=".carouseldisable" data-enable=".carouselenable" data-select=".st_carousel" data-unselect=".st_slider, .st_scene" data-r="type" data-evt="updatesliderlayout"  data-evtparam="slidertype" type="radio" value="carousel" id="slidertype_guide_carousel"  name="slidertype_guide" class="sliderinput easyinit" data-show="" data-hide="">
 								<mcg_guide_image class="guide_carousel"></mcg_guide_image>
 								<div class="mcg_o_title"><?php _e('Carousel');?></div>
 								<div class="mcg_o_descp"><?php _e('A Carousel is a Slider with multiple Slides<br>visible at the same time.<br>There are lots of options to customize the Carousel.');?></div>
@@ -105,19 +105,19 @@ if(!defined('ABSPATH')) exit();
 						</div>
 						<div class="mcg_option_third_wraps">				
 							<div class="sl_auto mcg_guide_optionwrap mcg_option_third">
-								<input data-select=".sl_auto" data-unselect=".sl_fullwidth, .sl_fullscreen" data-r="layouttype" data-evt="updatesliderlayout" type="radio" value="auto" name="sliderlayouttype_guide" class="sliderinput" data-show="#sr_size_minheight" data-hide=".sliderminheights,.decreaseheights">
+								<input data-select=".sl_auto" data-unselect=".sl_fullwidth, .sl_fullscreen" data-r="layouttype" data-evt="updatesliderlayout" type="radio" value="auto" id="sliderlayouttype_guide_auto" name="sliderlayouttype_guide" class="sliderinput easyinit" data-show="#sr_size_minheight" data-hide=".sliderminheights,.decreaseheights">
 								<mcg_guide_image class="guide_auto"></mcg_guide_image>
 								<div class="mcg_o_title"><?php _e('Auto');?></div>
 								<div class="mcg_o_descp"><?php _e('The module dimensions will automatically<br>adjust to the surrounding container width,<br>keeping its aspect ratio.');?></div>
 							</div>
 							<div class="sl_fullwidth mcg_guide_optionwrap mcg_option_third">
-								<input data-select=".sl_fullwidth" data-unselect=".sl_auto, .sl_fullscreen" data-r="layouttype" data-evt="updatesliderlayout" type="radio" value="fullwidth" name="sliderlayouttype_guide" class="sliderinput" data-show="#sr_size_minheight" data-hide=".sliderminheights,.decreaseheights">
+								<input data-select=".sl_fullwidth" data-unselect=".sl_auto, .sl_fullscreen" data-r="layouttype" data-evt="updatesliderlayout" type="radio" value="fullwidth" id="sliderlayouttype_guide_fullwidth" name="sliderlayouttype_guide" class="sliderinput easyinit" data-show="#sr_size_minheight" data-hide=".sliderminheights,.decreaseheights">
 								<mcg_guide_image class="guide_fullwidth"></mcg_guide_image>
 								<div class="mcg_o_title"><?php _e('Full-Width');?></div>
 								<div class="mcg_o_descp"><?php _e('The module will always span across the<br>full-width of the web-page. The height can<br>be flexible depending on other settings.');?></div>
 							</div>
 							<div class="sl_fullscreen mcg_guide_optionwrap mcg_option_third last">
-								<input data-select=".sl_fullscreen" data-unselect=".sl_auto, .sl_fullwidth" data-r="layouttype" data-evt="updatesliderlayout" type="radio" value="fullscreen" name="sliderlayouttype_guide" class="sliderinput" data-show="#sr_size_minheight_fs, .decreaseheights" data-hide=".sliderminheights">
+								<input data-select=".sl_fullscreen" data-unselect=".sl_auto, .sl_fullwidth" data-r="layouttype" data-evt="updatesliderlayout" type="radio" value="fullscreen" id="sliderlayouttype_guide_fullscreen" name="sliderlayouttype_guide" class="sliderinput easyinit" data-show="#sr_size_minheight_fs, .decreaseheights" data-hide=".sliderminheights">
 								<mcg_guide_image class="guide_fullscreen"></mcg_guide_image>
 								<div class="mcg_o_title"><?php _e('Full-Screen');?></div>
 								<div class="mcg_o_descp"><?php _e('The module will always fit the full area<br>within the web-page.');?></div>
@@ -554,6 +554,8 @@ if(!defined('ABSPATH')) exit();
 							<!-- Basics -->
 							<div class="mdl_group">
 								<div class="mdl_group_header"><i class="material-icons">copyright</i><?php _e('Basic Metas', 'revslider');?><i class="material-icons accordiondrop">arrow_drop_down</i></div>
+								<div data-val="{{current_slide_index}}" class="mdl_group_member"><div class="mdl_left_content"><i class="material-icons">bookmark</i><?php _e("Current Slide Index", 'revslider');?></div><div class="mdl_right_content">{{current_slide_index}}</div><div class="mdl_placeholder_content"><?php _e('03', 'revslider');?></div></div>
+								<div data-val="{{total_slide_count}}" class="mdl_group_member"><div class="mdl_left_content"><i class="material-icons">bookmark</i><?php _e("Number of Slides in Module", 'revslider');?></div><div class="mdl_right_content">{{total_slide_count}}</div><div class="mdl_placeholder_content"><?php _e('21', 'revslider');?></div></div>
 								<div data-val="{{current_page_link}}" class="mdl_group_member"><div class="mdl_left_content"><i class="material-icons">bookmark</i><?php _e("Link to current page", 'revslider');?></div><div class="mdl_right_content">{{current_page_link}}</div><div class="mdl_placeholder_content"><?php _e('http://yoursite.com/page', 'revslider');?></div></div>
 								<div data-val="{{home_url}}" class="mdl_group_member"><div class="mdl_left_content"><i class="material-icons">bookmark</i><?php _e("Link to WP Home Page", 'revslider');?></div><div class="mdl_right_content">{{home_url}}</div><div class="mdl_placeholder_content"><?php _e('http://yoursite.com/home', 'revslider');?></div></div>
 							</div>
@@ -614,7 +616,7 @@ if(!defined('ABSPATH')) exit();
 								<div class="mdl_group_header"><i class="material-icons">shopping_cart</i><?php _e('WooCommerce Stock', 'revslider');?><i class="material-icons accordiondrop">arrow_drop_down</i></div>
 								<div data-val="{{wc_sku}}" class="mdl_group_member"><div class="mdl_left_content"><i class="material-icons">dashboard</i><?php _e("SKU", 'revslider');?></div><div class="mdl_right_content">{{wc_sku}}</div><div class="mdl_placeholder_content"><?php _e('457819', 'revslider');?></div></div>
 								<div data-val="{{wc_stock}}" class="mdl_group_member"><div class="mdl_left_content"><i class="material-icons">dashboard</i><?php _e("In Stock", 'revslider');?></div><div class="mdl_right_content">{{wc_stock}}</div><div class="mdl_placeholder_content"><?php _e('5', 'revslider');?></div></div>
-								<div data-val="{{wc_stock_quantity}}" class="mdl_group_member"><div class="mdl_left_content"><i class="material-icons">dashboard</i><?php _e("Stock Quantity", 'revslider');?></div><div class="mdl_right_content">{{wc_stock_quantity}}</div><div class="mdl_placeholder_content"><?php _e('Package', 'revslider');?></div></div>
+								<div data-val="{{wc_stock_quantity}}" class="mdl_group_member"><div class="mdl_left_content"><i class="material-icons">dashboard</i><?php _e("Stock Quantity", 'revslider');?></div><div class="mdl_right_content">{{wc_stock_quantity}}</div><div class="mdl_placeholder_content"><?php _e('5', 'revslider');?></div></div>
 							</div>
 							<div class="mdl_group">
 								<div class="mdl_group_header"><i class="material-icons">shopping_cart</i><?php _e('WooCommerce Ratings', 'revslider');?><i class="material-icons accordiondrop">arrow_drop_down</i></div>
@@ -669,12 +671,14 @@ if(!defined('ABSPATH')) exit();
 							</div>
 
 							<!-- INSTAGRAM -->
+							<!--
 							<div class="mdl_group">
 								<div class="mdl_group_header"><i class="fa__icons fa-instagram"></i><?php _e('Instagram Extras', 'revslider');?><i class="material-icons accordiondrop">arrow_drop_down</i></div>
 								<div data-val="{{date}}" class="mdl_group_member"><div class="mdl_left_content"><i class="fa__icons fa-instagram"></i><?php _e("Date created", 'revslider');?></div><div class="mdl_right_content">{{date}}</div><div class="mdl_placeholder_content"><?php _e('08.03.2018', 'revslider');?></div></div>
-								<!--div data-val="{{likes}}" class="mdl_group_member"><div class="mdl_left_content"><i class="fa__icons fa-instagram"></i><?php _e("Number of Likes", 'revslider');?></div><div class="mdl_right_content">{{likes}}</div><div class="mdl_placeholder_content"><?php _e('12', 'revslider');?></div></div-->
+								<div data-val="{{likes}}" class="mdl_group_member"><div class="mdl_left_content"><i class="fa__icons fa-instagram"></i><?php _e("Number of Likes", 'revslider');?></div><div class="mdl_right_content">{{likes}}</div><div class="mdl_placeholder_content"><?php _e('12', 'revslider');?></div></div>
 								<div data-val="{{num_comments}}" class="mdl_group_member"><div class="mdl_left_content"><i class="fa__icons fa-instagram"></i><?php _e("Number of Comments", 'revslider');?></div><div class="mdl_right_content">{{num_comments}}</div><div class="mdl_placeholder_content"><?php _e('19', 'revslider');?></div></div>
 							</div>
+							-->
 
 							<!-- TWITTER -->
 							<div class="mdl_group">
@@ -877,6 +881,9 @@ if(!defined('ABSPATH')) exit();
 
 							<!-- DELAY -->
 							<div id="laction_delay"><label_a><?php _e('Action Delay', 'revslider');?></label_a><input class="easyinit actioninput" data-numeric="true" data-allowed="ms" type="text" id="layer_action_delay" data-r="actions.action.#actionindex#.action_delay" placeholder="0"></div>
+
+							<!-- REPEAT DELAY -->
+							<div id="lraction_delay"><label_a><?php _e('Trigger Repeat Delay', 'revslider');?></label_a><input class="easyinit actioninput" data-numeric="true" data-allowed="ms" type="text" id="layer_action_repeat" data-r="actions.action.#actionindex#.action_repeats" placeholder="0"></div>
 						</div><!-- END OF INPUT FIELD LIST OF THE SELECTED ACTION -->
 					</div>
 				</div>

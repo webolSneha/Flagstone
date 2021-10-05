@@ -1,6 +1,6 @@
 <?php
-    $tg_tour_display_related = kirki_get_option('tg_tour_display_related');
-    $tg_tour_related_layout = kirki_get_option('tg_tour_related_layout');
+    $tg_tour_display_related = get_theme_mod('tg_tour_display_related');
+    $tg_tour_related_layout = get_theme_mod('tg_tour_related_layout');
     
     $wrapper_class = '';
 	$grid_wrapper_class = '';

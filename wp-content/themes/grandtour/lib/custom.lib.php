@@ -746,7 +746,7 @@ function grandtour_auto_link_twitter($tweet)
 function grandtour_resort_gallery_img($all_photo_arr)
 {
 	$sorted_all_photo_arr = array();
-	$tg_gallery_sort = kirki_get_option('tg_gallery_sort');
+	$tg_gallery_sort = get_theme_mod('tg_gallery_sort');
 
 	if(!empty($tg_gallery_sort) && !empty($all_photo_arr))
 	{
@@ -1171,7 +1171,7 @@ function grandtour_get_first_title_word($title) {
 }
 
 function grandtour_menu_layout() {
-	$tg_menu_layout = kirki_get_option('tg_menu_layout');
+	$tg_menu_layout = get_theme_mod('tg_menu_layout');
 	if(GRANDTOUR_THEMEDEMO && isset($_GET['menulayout']) && !empty($_GET['menulayout']))
 	{
 		$tg_menu_layout = $_GET['menulayout'];
@@ -1725,11 +1725,11 @@ function grandtour_format_tour_price($tour_price = 0)
 	$return_html = '';
 	if(!empty($tour_price) && is_numeric($tour_price))
 	{
-		$tg_tour_currency = kirki_get_option('tg_tour_currency');
-		$tg_tour_currency_display = kirki_get_option('tg_tour_currency_display');
-		$tg_tour_currency_thousand_sep = kirki_get_option('tg_tour_currency_thousand_sep');
-		$tg_tour_currency_decimal_sep = kirki_get_option('tg_tour_currency_decimal_sep');
-		$tg_tour_currency_decimal_number = kirki_get_option('tg_tour_currency_decimal_number');
+		$tg_tour_currency = get_theme_mod('tg_tour_currency');
+		$tg_tour_currency_display = get_theme_mod('tg_tour_currency_display');
+		$tg_tour_currency_thousand_sep = get_theme_mod('tg_tour_currency_thousand_sep');
+		$tg_tour_currency_decimal_sep = get_theme_mod('tg_tour_currency_decimal_sep');
+		$tg_tour_currency_decimal_number = get_theme_mod('tg_tour_currency_decimal_number');
 		
 		if($tg_tour_currency_display == 'before')
 		{

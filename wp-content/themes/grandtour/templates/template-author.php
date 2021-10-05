@@ -1,5 +1,5 @@
 <?php
-    $tg_blog_display_author = kirki_get_option('tg_blog_display_author');
+    $tg_blog_display_author = get_theme_mod('tg_blog_display_author');
     $author_info = get_the_author_meta('description');
     
     if($tg_blog_display_author && !empty($author_info))

@@ -16,7 +16,7 @@ $grandtour_topbar = grandtour_get_topbar();
 $current_page_id = $post->ID;
 
 //If display feat content
-$tg_blog_feat_content = kirki_get_option('tg_blog_feat_content');
+$tg_blog_feat_content = get_theme_mod('tg_blog_feat_content');
 
 
 /**
@@ -158,7 +158,7 @@ if (have_posts()) : while (have_posts()) : the_post();
 							    //Get image meta data
 							    $image_caption = get_post_field('post_excerpt', $photo_id);
 							    $image_alt = get_post_meta($photo_id, '_wp_attachment_image_alt', true);
-							    $tg_lightbox_enable_caption = kirki_get_option('tg_lightbox_enable_caption');
+							    $tg_lightbox_enable_caption = get_theme_mod('tg_lightbox_enable_caption');
 							    
 							    //First image large
 							    if($key == 0)

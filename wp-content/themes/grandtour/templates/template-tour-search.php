@@ -158,7 +158,7 @@
     	
     	<?php
 	    	//Check if enable advanced search
-	    	$tg_tour_advanced_search = kirki_get_option('tg_tour_advanced_search');
+	    	$tg_tour_advanced_search = get_theme_mod('tg_tour_advanced_search');
 	    	
 	    	if(!empty($tg_tour_advanced_search))
 	    	{
@@ -216,7 +216,7 @@
 		    	<input id="budget" name="budget" type="text" placeholder="<?php esc_html_e('Max budget ex. 500', 'grandtour' ); ?>" <?php if(isset($_GET['budget'])) { ?>value="<?php echo esc_attr($_GET['budget']); ?>"<?php } ?>/>
 		    	<?php
 			    	//Get currency setting
-			    	$tg_tour_currency = kirki_get_option('tg_tour_currency');
+			    	$tg_tour_currency = get_theme_mod('tg_tour_currency');
 			    ?>
 		    	<span><?php echo esc_attr($tg_tour_currency); ?></span>
 	    	</div>

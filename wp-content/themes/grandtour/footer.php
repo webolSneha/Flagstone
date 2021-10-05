@@ -8,7 +8,7 @@
 ?>
 
 <?php
-$tg_tour_recently_view = kirki_get_option('tg_tour_recently_view');
+$tg_tour_recently_view = get_theme_mod('tg_tour_recently_view');
     
 if(!empty($tg_tour_recently_view))
  {
@@ -183,7 +183,7 @@ if(!empty($tg_tour_recently_view))
 
 	$grandtour_homepage_style = grandtour_get_homepage_style();
 	
-	$tg_footer_sidebar = kirki_get_option('tg_footer_sidebar');
+	$tg_footer_sidebar = get_theme_mod('tg_footer_sidebar');
 ?>
 
 <?php
@@ -276,7 +276,7 @@ if(!empty($tg_tour_recently_view))
 if($grandtour_homepage_style != 'fullscreen' && $grandtour_homepage_style != 'fullscreen_white' && $grandtour_homepage_style != 'split')
 {
 	//Get Footer Sidebar
-	$tg_footer_sidebar = kirki_get_option('tg_footer_sidebar');
+	$tg_footer_sidebar = get_theme_mod('tg_footer_sidebar');
 	if(GRANDTOUR_THEMEDEMO && isset($_GET['footer']) && !empty($_GET['footer']))
 	{
 	    $tg_footer_sidebar = 0;
@@ -287,14 +287,14 @@ if($grandtour_homepage_style != 'fullscreen' && $grandtour_homepage_style != 'fu
 	<div class="footer_bar_wrapper <?php if(isset($grandtour_homepage_style) && !empty($grandtour_homepage_style)) { echo esc_attr($grandtour_homepage_style); } ?>">
 		<?php
 			//Check if display social icons or footer menu
-			$tg_footer_copyright_right_area = kirki_get_option('tg_footer_copyright_right_area');
+			$tg_footer_copyright_right_area = get_theme_mod('tg_footer_copyright_right_area');
 			
 			if($tg_footer_copyright_right_area=='social')
 			{
 				if($grandtour_homepage_style!='flow' && $grandtour_homepage_style!='fullscreen' && $grandtour_homepage_style!='carousel' && $grandtour_homepage_style!='flip' && $grandtour_homepage_style!='fullscreen_video')
 				{	
 					//Check if open link in new window
-					$tg_footer_social_link = kirki_get_option('tg_footer_social_link');
+					$tg_footer_social_link = get_theme_mod('tg_footer_social_link');
 			?>
 			<div class="social_wrapper">
 			    <ul>
@@ -460,7 +460,7 @@ if($grandtour_homepage_style != 'fullscreen' && $grandtour_homepage_style != 'fu
 		?>
 	    <?php
 	    	//Display copyright text
-	        $tg_footer_copyright_text = kirki_get_option('tg_footer_copyright_text');
+	        $tg_footer_copyright_text = get_theme_mod('tg_footer_copyright_text');
 
 	        if(!empty($tg_footer_copyright_text))
 	        {
@@ -470,7 +470,7 @@ if($grandtour_homepage_style != 'fullscreen' && $grandtour_homepage_style != 'fu
 	    
 	    <?php
 	    	//Check if display to top button
-	    	$tg_footer_copyright_totop = kirki_get_option('tg_footer_copyright_totop');
+	    	$tg_footer_copyright_totop = get_theme_mod('tg_footer_copyright_totop');
 	    	
 	    	if(!empty($tg_footer_copyright_totop))
 	    	{
@@ -699,7 +699,7 @@ if($grandtour_homepage_style != 'fullscreen' && $grandtour_homepage_style != 'fu
 ?>
 
 <?php
-    $tg_frame = kirki_get_option('tg_frame');
+    $tg_frame = get_theme_mod('tg_frame');
     if(GRANDTOUR_THEMEDEMO && isset($_GET['frame']) && !empty($_GET['frame']))
     {
 	    $tg_frame = 1;

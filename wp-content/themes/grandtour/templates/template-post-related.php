@@ -1,5 +1,5 @@
 <?php
-    $tg_blog_display_related = kirki_get_option('tg_blog_display_related');
+    $tg_blog_display_related = get_theme_mod('tg_blog_display_related');
     
     if($tg_blog_display_related)
     {

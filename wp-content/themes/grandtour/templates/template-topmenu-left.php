@@ -19,7 +19,7 @@ elseif(is_home())
 <div class="header_style_wrapper">
 <?php
     //Check if display top bar
-    $tg_topbar = kirki_get_option('tg_topbar');
+    $tg_topbar = get_theme_mod('tg_topbar');
     if(GRANDTOUR_THEMEDEMO && isset($_GET['topbar']) && !empty($_GET['topbar']))
 	{
 	    $tg_topbar = true;
@@ -38,7 +38,7 @@ elseif(is_home())
     
     <div class="top_contact_info">
 		<?php
-		    $tg_menu_contact_hours = kirki_get_option('tg_menu_contact_hours');
+		    $tg_menu_contact_hours = get_theme_mod('tg_menu_contact_hours');
 		    
 		    if(!empty($tg_menu_contact_hours))
 		    {	
@@ -49,7 +49,7 @@ elseif(is_home())
 		?>
 		<?php
 		    //Display top contact info
-		    $tg_menu_contact_number = kirki_get_option('tg_menu_contact_number');
+		    $tg_menu_contact_number = get_theme_mod('tg_menu_contact_number');
 		    
 		    if(!empty($tg_menu_contact_number))
 		    {
@@ -113,7 +113,7 @@ elseif(is_home())
 	    switch($post_type)
 	    {
 	    	case 'tour':
-	    		$tg_tour_single_header = kirki_get_option('tg_tour_single_header');
+	    		$tg_tour_single_header = get_theme_mod('tg_tour_single_header');
 		    	
 	    		if(has_post_thumbnail($current_page_id, 'original') && !empty($tg_tour_single_header))
 				{
@@ -171,7 +171,7 @@ elseif(is_home())
     	
     	<?php
     	    //get custom logo
-    	    $tg_retina_logo = kirki_get_option('tg_retina_logo');
+    	    $tg_retina_logo = get_theme_mod('tg_retina_logo');
 
     	    if(!empty($tg_retina_logo))
     	    {	
@@ -225,7 +225,7 @@ elseif(is_home())
     	
     	<?php
     		//get custom logo transparent
-    	    $tg_retina_transparent_logo = kirki_get_option('tg_retina_transparent_logo');
+    	    $tg_retina_transparent_logo = get_theme_mod('tg_retina_transparent_logo');
 
     	    if(!empty($tg_retina_transparent_logo))
     	    {

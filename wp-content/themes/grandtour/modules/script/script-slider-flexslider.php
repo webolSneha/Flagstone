@@ -21,7 +21,7 @@ jQuery(document).ready(function(){
 	      slideshow: 0,
 	      animationSpeed: 400,
 <?php
-	$tg_blog_slider_autoplay = kirki_get_option('tg_blog_slider_autoplay');
+	$tg_blog_slider_autoplay = get_theme_mod('tg_blog_slider_autoplay');
 	
 	if(!empty($tg_blog_slider_autoplay))
 	{
@@ -31,7 +31,7 @@ jQuery(document).ready(function(){
 	}
 ?>
 <?php
-	$tg_blog_slider_timer = kirki_get_option('tg_blog_slider_timer');
+	$tg_blog_slider_timer = get_theme_mod('tg_blog_slider_timer');
 	
 	if(!empty($tg_blog_slider_timer))
 	{

@@ -255,7 +255,7 @@
 	?>
 	<?php
  		//Check if enable tour sharing
- 		$tg_tour_single_share = kirki_get_option('tg_tour_single_share');
+ 		$tg_tour_single_share = get_theme_mod('tg_tour_single_share');
  		
  		if(!empty($tg_tour_single_share))
  		{
@@ -380,7 +380,7 @@
 		<?php
 			if(!empty($tour_map_address))
 			{
-				$tg_tour_map_marker = kirki_get_option('tg_tour_map_marker');
+				$tg_tour_map_marker = get_theme_mod('tg_tour_map_marker');
 		?>
 		<li>
 			<div class="single_tour_departure_title"><?php esc_html_e("Maps", 'grandtour'); ?></div>
@@ -393,7 +393,7 @@
 
 	<?php
 		//Check if enable tour review
-		$tg_tour_single_review = kirki_get_option('tg_tour_single_review');
+		$tg_tour_single_review = get_theme_mod('tg_tour_single_review');
 		
 		//Display tour comment
 		if (comments_open($post->ID) && !empty($tg_tour_single_review)) 

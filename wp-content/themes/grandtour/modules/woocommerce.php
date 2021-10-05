@@ -13,7 +13,7 @@ function grandtour_title_for_shop( $title )
 add_filter( 'loop_shop_per_page', 'grandtour_shop_per_page', 20 );
 function grandtour_shop_per_page()
 {
-	$tg_shop_items = kirki_get_option('tg_shop_items');
+	$tg_shop_items = get_theme_mod('tg_shop_items');
 	return $tg_shop_items;
 }
 
@@ -38,7 +38,7 @@ add_filter( 'woocommerce_output_related_products_args', 'grandtour_related_produ
 function grandtour_related_products_args( $args ) 
 {
   	//Check if display related products
-	$tg_shop_related_products = kirki_get_option('tg_shop_related_products');
+	$tg_shop_related_products = get_theme_mod('tg_shop_related_products');
 	
 	if(!empty($tg_shop_related_products))
 	{

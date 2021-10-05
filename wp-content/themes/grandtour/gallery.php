@@ -50,7 +50,7 @@ get_template_part("/templates/template-gallery-header");
 	<div id="portfolio_filter_wrapper" class="gallery four_cols portfolio-content section content clearfix" data-columns="4">
 	
 	<?php
-		$tg_lightbox_enable_caption = kirki_get_option('tg_lightbox_enable_caption');
+		$tg_lightbox_enable_caption = get_theme_mod('tg_lightbox_enable_caption');
 	
 	    foreach($all_photo_arr as $key => $photo_id)
 	    {

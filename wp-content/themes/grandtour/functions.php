@@ -463,7 +463,9 @@ function grandtour_enqueue_front_page_scripts()
 	wp_enqueue_style("fontawesome", get_template_directory_uri()."/css/font-awesome.min.css", false, "", "all");
 	wp_enqueue_style("themify-icons", get_template_directory_uri()."/css/themify-icons.css", false, GRANDTOUR_THEMEVERSION, "all");
 	
-	$tg_boxed = kirki_get_option('tg_boxed');
+	$tg_boxed = get_theme_mod('tg_boxed');
+
+	
     if(GRANDTOUR_THEMEDEMO && isset($_GET['boxed']) && !empty($_GET['boxed']))
     {
     	$tg_boxed = 1;
@@ -538,7 +540,8 @@ add_action( 'wp_enqueue_scripts', 'grandtour_enqueue_front_page_scripts' );
 function grandtour_register_mobile_css() 
 {
 	//Check if enable responsive layout
-	$tg_mobile_responsive = kirki_get_option('tg_mobile_responsive');
+	$tg_mobile_responsive = get_theme_mod('tg_mobile_responsive');
+    $tg_mobile_responsive=1;
 	
 	if(!empty($tg_mobile_responsive))
 	{
@@ -2138,7 +2141,7 @@ function grandtour_import_demo_content() {
 	    update_option('page_on_front', $page_on_front);
 	    
 	    //Set default custom menu settings
-	    $locations = get_theme_mod('nav_menu_locations');
+	    $locations = kirki_get_option('nav_menu_locations');
 		switch($_POST['demo'])
 	    {
 		    case 1:
@@ -2167,7 +2170,7 @@ function grandtour_import_demo_content() {
 			if(isset($styling_data_arr['mods']) && is_array($styling_data_arr['mods']))
 			{	
 				// Get menu locations and save to array
-				$locations = get_theme_mod('nav_menu_locations');
+				$locations = kirki_get_option('nav_menu_locations');
 				$save_menus = array();
 				foreach( $locations as $key => $val ) 
 				{
@@ -2275,7 +2278,7 @@ function grandtour_get_styling() {
 			if(isset($styling_data_arr['mods']) && is_array($styling_data_arr['mods']))
 			{	
 				// Get menu locations and save to array
-				$locations = get_theme_mod('nav_menu_locations');
+				$locations = kirki_get_option('nav_menu_locations');
 				$save_menus = array();
 				foreach( $locations as $key => $val ) 
 				{

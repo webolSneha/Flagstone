@@ -17,7 +17,7 @@ $grandtour_topbar = grandtour_get_topbar();
 $grandtour_screen_class = grandtour_get_screen_class();
 $grandtour_page_content_class = grandtour_get_page_content_class();
 
-$tg_blog_feat_content = kirki_get_option('tg_blog_feat_content');
+$tg_blog_feat_content = get_theme_mod('tg_blog_feat_content');
 if(!empty($tg_blog_header_bg) && has_post_thumbnail($current_page_id, 'full') && $post_ft_type != 'Gallery')
 {
 	$pp_page_bg = '';
@@ -40,7 +40,7 @@ if(!empty($tg_blog_header_bg) && has_post_thumbnail($current_page_id, 'full') &&
 
 	<?php
 		//Check page title vertical alignment
-		$tg_page_title_vertical_alignment = kirki_get_option('tg_page_title_vertical_alignment');
+		$tg_page_title_vertical_alignment = get_theme_mod('tg_page_title_vertical_alignment');
 		if($tg_page_title_vertical_alignment == 'center')
 		{	
 	?>

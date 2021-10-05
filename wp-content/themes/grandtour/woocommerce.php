@@ -16,7 +16,7 @@ get_header();
 $page_sidebar = '';
 
 //Get Shop Sidebar Display Settting
-$tg_shop_layout = kirki_get_option('tg_shop_layout');
+$tg_shop_layout = get_theme_mod('tg_shop_layout');
 
 if(GRANDTOUR_THEMEDEMO && isset($_GET['sidebar']))
 {
@@ -57,7 +57,7 @@ if(empty($page_show_title))
     }
     
     //Check if add parallax effect
-	$tg_page_header_bg_parallax = kirki_get_option('tg_page_header_bg_parallax');
+	$tg_page_header_bg_parallax = get_theme_mod('tg_page_header_bg_parallax');
 	
 	$grandtour_topbar = grandtour_get_topbar();
 	$page_header_type = '';
@@ -88,7 +88,7 @@ if(empty($page_show_title))
 	
 	<?php
 		//Check page title vertical alignment
-		$tg_page_title_vertical_alignment = kirki_get_option('tg_page_title_vertical_alignment');
+		$tg_page_title_vertical_alignment = get_theme_mod('tg_page_title_vertical_alignment');
 		if($tg_page_title_vertical_alignment == 'center')
 		{	
 	?>

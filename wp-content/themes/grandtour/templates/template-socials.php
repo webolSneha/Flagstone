@@ -1,7 +1,7 @@
 <?php
     //Display top social icons
     //Check if open link in new window
-    $tg_topbar_social_link = kirki_get_option('tg_topbar_social_link');
+    $tg_topbar_social_link = get_theme_mod('tg_topbar_social_link');
 ?>
 <div class="social_wrapper">
     <ul>

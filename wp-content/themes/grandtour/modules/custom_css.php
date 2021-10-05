@@ -49,7 +49,7 @@ if(empty($pp_animation))
 	}
 ?>
 <?php
-	$tg_fixed_menu = kirki_get_option('tg_fixed_menu');
+	$tg_fixed_menu = get_theme_mod('tg_fixed_menu');
 	
 	if(!empty($tg_fixed_menu))
 	{
@@ -140,7 +140,7 @@ body.js_nav .mobile_menu_wrapper
 
 <?php
 	$tg_menu_layout = grandtour_menu_layout();
-	$tg_sidemenu = kirki_get_option('tg_sidemenu');
+	$tg_sidemenu = get_theme_mod('tg_sidemenu');
 	
 	if(empty($tg_sidemenu) && $tg_menu_layout != 'hammenufull')
 	{
@@ -440,9 +440,9 @@ body.admin-bar #option_wrapper .inner
 }
 
 <?php
-	$tg_full_arrow = kirki_get_option('tg_full_arrow');
-	$tg_content_bg_color = kirki_get_option('tg_content_bg_color');
-	$tg_h1_font_color = kirki_get_option('tg_h1_font_color');
+	$tg_full_arrow = get_theme_mod('tg_full_arrow');
+	$tg_content_bg_color = get_theme_mod('tg_content_bg_color');
+	$tg_h1_font_color = get_theme_mod('tg_h1_font_color');
 	
 	if(!empty($tg_full_arrow))
 	{
@@ -518,7 +518,7 @@ body.page-template-gallery:hover a#nextslide, body.single-galleries:hover a#next
 
 <?php
 	//Check if enable b & w effect
-	$tg_gallery_hover_bw = kirki_get_option('tg_gallery_hover_bw');
+	$tg_gallery_hover_bw = get_theme_mod('tg_gallery_hover_bw');
 	
 	if(!empty($tg_gallery_hover_bw))
 	{
@@ -555,7 +555,7 @@ body.postid-6282 .three_cols.gallery .element a:hover img, body.page-id-6352 .th
 ?>
 
 <?php
-	$tg_sidemenu_font_size = kirki_get_option('tg_sidemenu_font_size');
+	$tg_sidemenu_font_size = get_theme_mod('tg_sidemenu_font_size');
 	
 	if(!empty($tg_sidemenu_font_size))
 	{
@@ -580,8 +580,8 @@ body.postid-6282 .three_cols.gallery .element a:hover img, body.page-id-6352 .th
 ?>
 
 <?php
-	$tg_sidemenu_bg = kirki_get_option('tg_sidemenu_bg');
-	$tg_sidemenu_bg_opacity = kirki_get_option('tg_sidemenu_bg_opacity');
+	$tg_sidemenu_bg = get_theme_mod('tg_sidemenu_bg');
+	$tg_sidemenu_bg_opacity = get_theme_mod('tg_sidemenu_bg_opacity');
 	$tg_sidemenu_bg_opacity_value = $tg_sidemenu_bg_opacity/100;
 	
 	if(!empty($tg_sidemenu_bg))
@@ -598,7 +598,7 @@ body .mobile_menu_wrapper
 
 <?php
 	$tg_menu_layout = grandtour_menu_layout();
-	$tg_sidemenu_align = kirki_get_option('tg_sidemenu_align');
+	$tg_sidemenu_align = get_theme_mod('tg_sidemenu_align');
 	
 	if($tg_sidemenu_align == 'right' && $tg_menu_layout != 'hammenufull')
 	{
@@ -644,7 +644,7 @@ body.js_nav #side_menu_wrapper
 
 <?php
 	//Check if smart sticky menu
-	$tg_smart_fixed_menu = kirki_get_option('tg_smart_fixed_menu');
+	$tg_smart_fixed_menu = get_theme_mod('tg_smart_fixed_menu');
 	
 	if(!empty($tg_smart_fixed_menu))
 	{
@@ -731,7 +731,7 @@ body.js_nav #side_menu_wrapper
 		$logo_margin_left = 46;
 		
 		//get custom logo
-    	$tg_retina_logo = kirki_get_option('tg_retina_logo');
+    	$tg_retina_logo = get_theme_mod('tg_retina_logo');
 
     	if(!empty($tg_retina_logo))
     	{
@@ -761,7 +761,7 @@ body.js_nav #side_menu_wrapper
 	}
 <?php
 		//get custom logo
-    	$tg_retina_transparent_logo = kirki_get_option('tg_retina_transparent_logo');
+    	$tg_retina_transparent_logo = get_theme_mod('tg_retina_transparent_logo');
 
     	if(!empty($tg_retina_transparent_logo))
     	{
@@ -789,7 +789,7 @@ body.js_nav #side_menu_wrapper
 	}
 }
 <?php
-	$tg_topbar = kirki_get_option('tg_topbar');
+	$tg_topbar = get_theme_mod('tg_topbar');
 	
 	if(!empty($tg_topbar))
 	{
@@ -819,7 +819,7 @@ body.js_nav #side_menu_wrapper
 <?php
 	}
 	
-	$tg_boxed_bg_image = kirki_get_option('tg_boxed_bg_image');
+	$tg_boxed_bg_image = get_theme_mod('tg_boxed_bg_image');
 	if(!empty($tg_boxed_bg_image))
 	{
 ?>
@@ -832,7 +832,7 @@ body.tg_boxed
 	
 	if(GRANDTOUR_THEMEDEMO)
     {
-	    $tg_button_bg_color = kirki_get_option('tg_button_bg_color');
+	    $tg_button_bg_color = get_theme_mod('tg_button_bg_color');
 ?>
 .frame_top, .frame_bottom, .frame_left, .frame_right
 {
@@ -843,7 +843,7 @@ body.tg_boxed
 ?>
 
 <?php
-	$tg_tour_recently_view = kirki_get_option('tg_tour_recently_view');
+	$tg_tour_recently_view = get_theme_mod('tg_tour_recently_view');
 	
 	if(!empty($tg_tour_recently_view))
 	{
@@ -858,7 +858,7 @@ body.tg_boxed
 
 <?php
 	//Check page title vertical alignment
-	$tg_page_title_vertical_alignment = kirki_get_option('tg_page_title_vertical_alignment');
+	$tg_page_title_vertical_alignment = get_theme_mod('tg_page_title_vertical_alignment');
 	if($tg_page_title_vertical_alignment == 'center')
 	{
 ?>

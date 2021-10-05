@@ -47,7 +47,7 @@ elseif($post_type == 'destination')
 else
 {
 	//Get archive page layout setting
-	$tg_blog_archive_layout = kirki_get_option('tg_blog_archive_layout');
+	$tg_blog_archive_layout = get_theme_mod('tg_blog_archive_layout');
 	
 	$located = locate_template($tg_blog_archive_layout.'.php');
 	if (!empty($located))

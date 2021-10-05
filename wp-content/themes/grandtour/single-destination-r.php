@@ -46,7 +46,7 @@ get_header();
 	    
 	    <?php
 		    //Check related tour order
-		    $tg_destination_single_tour_order = kirki_get_option('tg_destination_single_tour_order');
+		    $tg_destination_single_tour_order = get_theme_mod('tg_destination_single_tour_order');
 		    
 		    if($tg_destination_single_tour_order == 'before')
 		    {
@@ -65,7 +65,7 @@ get_header();
 				 
 				<?php
 			 		//Check if enable tour sharing
-			 		$tg_tour_single_share = kirki_get_option('tg_tour_single_share');
+			 		$tg_tour_single_share = get_theme_mod('tg_tour_single_share');
 			 		
 			 		if(!empty($tg_tour_single_share))
 			 		{

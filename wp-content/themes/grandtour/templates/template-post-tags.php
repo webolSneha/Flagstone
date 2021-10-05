@@ -1,5 +1,5 @@
 <?php
- $tg_blog_display_tags = kirki_get_option('tg_blog_display_tags');
+ $tg_blog_display_tags = get_theme_mod('tg_blog_display_tags');
 
     if(has_tag() && !empty($tg_blog_display_tags))
     {

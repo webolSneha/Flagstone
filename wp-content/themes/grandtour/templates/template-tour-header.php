@@ -18,7 +18,7 @@ $page_title = get_the_title();
 $page_menu_transparent = 0;
 
 //Get tour header option
-$tg_tour_single_header = kirki_get_option('tg_tour_single_header');
+$tg_tour_single_header = get_theme_mod('tg_tour_single_header');
 
 if(has_post_thumbnail($current_page_id, 'original') && !empty($tg_tour_single_header))
 {
@@ -62,7 +62,7 @@ if(has_post_thumbnail($current_page_id, 'original') && !empty($tg_tour_single_he
 	$parallax_class = 'parallax';
 	
 	//Check if add parallax effect
-	$tg_page_header_bg_parallax = kirki_get_option('tg_page_header_bg_parallax');
+	$tg_page_header_bg_parallax = get_theme_mod('tg_page_header_bg_parallax');
 	
 	if($tour_header_type == 'Image' && empty($tg_page_header_bg_parallax))
 	{

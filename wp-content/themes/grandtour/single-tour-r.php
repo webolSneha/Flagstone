@@ -23,7 +23,7 @@ $page_tagline = get_the_excerpt();
 	    	
     		<?php
 	    		//Get how single tour content display on mobile
-	    		$tg_tour_single_mobile_content = kirki_get_option('tg_tour_single_mobile_content');
+	    		$tg_tour_single_mobile_content = get_theme_mod('tg_tour_single_mobile_content');
 	    		
 	    		if($tg_tour_single_mobile_content == 'booking')
 	    		{

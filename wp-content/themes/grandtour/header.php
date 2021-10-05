@@ -28,7 +28,7 @@ $tg_menu_layout = grandtour_menu_layout();
 		/**
 		*	Get favicon URL
 		**/
-		$tg_favicon = kirki_get_option('tg_favicon');
+		$tg_favicon = get_theme_mod('tg_favicon');
 		
 		if(!empty($tg_favicon))
 		{
@@ -53,44 +53,44 @@ $tg_menu_layout = grandtour_menu_layout();
 
 	<?php
 		//Check if disable right click
-		$tg_enable_right_click = kirki_get_option('tg_enable_right_click');
+		$tg_enable_right_click = get_theme_mod('tg_enable_right_click');
 		
 		//Check if disable image dragging
-		$tg_enable_dragging = kirki_get_option('tg_enable_dragging');
+		$tg_enable_dragging = get_theme_mod('tg_enable_dragging');
 		
 		//Check if sticky menu
-		$tg_fixed_menu = kirki_get_option('tg_fixed_menu');
+		$tg_fixed_menu = get_theme_mod('tg_fixed_menu');
 		
 		//Check if smart sticky menu
-		$tg_smart_fixed_menu = kirki_get_option('tg_smart_fixed_menu');
+		$tg_smart_fixed_menu = get_theme_mod('tg_smart_fixed_menu');
 		
 		//Check if sticky sidebar
-		$tg_sidebar_sticky = kirki_get_option('tg_sidebar_sticky');
+		$tg_sidebar_sticky = get_theme_mod('tg_sidebar_sticky');
 		
 		//Check if display top bar
-		$tg_topbar = kirki_get_option('tg_topbar');
+		$tg_topbar = get_theme_mod('tg_topbar');
 		if(GRANDTOUR_THEMEDEMO && isset($_GET['topbar']) && !empty($_GET['topbar']))
 		{
 			$tg_topbar = true;
 		}
 		
 		//Check if add blur effect
-		$tg_page_title_img_blur = kirki_get_option('tg_page_title_img_blur');
+		$tg_page_title_img_blur = get_theme_mod('tg_page_title_img_blur');
 
 		//Check menu layout
 		$tg_menu_layout = grandtour_menu_layout();
 		
 		//Check filterable link option
-		$tg_portfolio_filterable_link = kirki_get_option('tg_portfolio_filterable_link');
+		$tg_portfolio_filterable_link = get_theme_mod('tg_portfolio_filterable_link');
 		
 		//Check image flow reflection option
-		$tg_flow_enable_reflection = kirki_get_option('tg_flow_enable_reflection');
+		$tg_flow_enable_reflection = get_theme_mod('tg_flow_enable_reflection');
 		
 		//Get lightbox skin color
-		$tg_lightbox_skin = kirki_get_option('tg_lightbox_skin');
+		$tg_lightbox_skin = get_theme_mod('tg_lightbox_skin');
 		
 		//Get lightbox thumbnails alignment
-		$tg_lightbox_thumbnails = kirki_get_option('tg_lightbox_thumbnails');
+		$tg_lightbox_thumbnails = get_theme_mod('tg_lightbox_thumbnails');
 		$tg_lightbox_thumbnails_display = true;
 		if(empty($tg_lightbox_thumbnails))
 		{
@@ -98,11 +98,11 @@ $tg_menu_layout = grandtour_menu_layout();
 		}
 		
 		//Get lightbox overlay opacity
-		$tg_lightbox_opacity = kirki_get_option('tg_lightbox_opacity');
+		$tg_lightbox_opacity = get_theme_mod('tg_lightbox_opacity');
 		$tg_lightbox_opacity = $tg_lightbox_opacity/100;
 		
 		//Get side menu overlay effect
-		$tg_sidemenu_overlay_effect = kirki_get_option('tg_sidemenu_overlay_effect');
+		$tg_sidemenu_overlay_effect = get_theme_mod('tg_sidemenu_overlay_effect');
 	?>
 	<input type="hidden" id="pp_menu_layout" name="pp_menu_layout" value="<?php echo esc_attr($tg_menu_layout); ?>"/>
 	<input type="hidden" id="pp_enable_right_click" name="pp_enable_right_click" value="<?php echo esc_attr($tg_enable_right_click); ?>"/>
@@ -128,7 +128,7 @@ $tg_menu_layout = grandtour_menu_layout();
 		if(class_exists('Woocommerce'))
 		{
 			//Get page to be redirected when booking
-			$tg_tour_book_redirect = kirki_get_option('tg_tour_book_redirect');
+			$tg_tour_book_redirect = get_theme_mod('tg_tour_book_redirect');
 			
 			$woocommerce = grandtour_get_woocommerce();
 			
@@ -149,8 +149,8 @@ $tg_menu_layout = grandtour_menu_layout();
 	<?php
 		//Check if single tour page
 		$post_type = get_post_type();
-		$tg_tour_single_review = kirki_get_option('tg_tour_single_review');
-		$tg_tour_google_rating = kirki_get_option('tg_tour_google_rating');
+		$tg_tour_single_review = get_theme_mod('tg_tour_single_review');
+		$tg_tour_google_rating = get_theme_mod('tg_tour_google_rating');
 		
 		if(is_single() && $post_type == 'tour' && !empty($tg_tour_single_review) && !empty($tg_tour_google_rating))
 		{
@@ -172,7 +172,7 @@ $tg_menu_layout = grandtour_menu_layout();
 			$author_name = get_the_author();
 			$count_review = get_comments_number($post->ID);
 			
-			$tg_tour_currency = kirki_get_option('tg_tour_currency');
+			$tg_tour_currency = get_theme_mod('tg_tour_currency');
 			
 			//Get tour price
 		 	$tour_price = get_post_meta($post->ID, 'tour_price', true);
@@ -232,7 +232,7 @@ $tg_menu_layout = grandtour_menu_layout();
 	
 	<?php
 		//Check footer sidebar columns
-		$tg_footer_sidebar = kirki_get_option('tg_footer_sidebar');
+		$tg_footer_sidebar = get_theme_mod('tg_footer_sidebar');
 	?>
 	<input type="hidden" id="pp_footer_style" name="pp_footer_style" value="<?php echo esc_attr($tg_footer_sidebar); ?>"/>
 	
@@ -302,7 +302,7 @@ $tg_menu_layout = grandtour_menu_layout();
 		    switch($post_type)
 		    {
 		    	case 'tour':
-			    	$tg_tour_single_header = kirki_get_option('tg_tour_single_header');
+			    	$tg_tour_single_header = get_theme_mod('tg_tour_single_header');
 			    	
 		    		if(has_post_thumbnail($current_page_id, 'original') && !empty($tg_tour_single_header))
 					{

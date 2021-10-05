@@ -28,7 +28,8 @@ if ( ! function_exists( 'kirki_get_option' ) ) {
 	 * @return mixed
 	 */
 	function kirki_get_option( $option = '' ) {
-		return Kirki::get_option( '', $option );
+		//return Kirki::get_option( '', $option );
+		return get_theme_mod($option);
 	}
 }
 

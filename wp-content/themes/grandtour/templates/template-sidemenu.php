@@ -12,7 +12,7 @@
 		$tg_menu_layout = grandtour_menu_layout();
     
 	    //Check if display search in header	
-	    $tg_menu_search = kirki_get_option('tg_menu_search');
+	    $tg_menu_search = get_theme_mod('tg_menu_search');
 	    if($tg_menu_layout == 'leftmenu')
 	    {
     	    $tg_menu_search = 0;
@@ -129,7 +129,7 @@
 	if(empty($page_menu_transparent))
 	{
 	    //get custom logo
-	    $tg_retina_logo = kirki_get_option('tg_retina_logo');
+	    $tg_retina_logo = get_theme_mod('tg_retina_logo');
 
 	    if(!empty($tg_retina_logo))
 	    {	
@@ -177,7 +177,7 @@
 	else
 	{
         //get custom logo transparent
-        $tg_retina_transparent_logo = kirki_get_option('tg_retina_transparent_logo');
+        $tg_retina_transparent_logo = get_theme_mod('tg_retina_transparent_logo');
 
         if(!empty($tg_retina_transparent_logo))
         {

@@ -316,7 +316,7 @@ function grandtour_add_meta_tags() {
     echo '<meta charset="'.get_bloginfo( 'charset' ).'" />';
     
     //Check if responsive layout is enabled
-    $tg_mobile_responsive = kirki_get_option('tg_mobile_responsive');
+    $tg_mobile_responsive = get_theme_mod('tg_mobile_responsive');
 	
 	if(!empty($tg_mobile_responsive))
 	{
@@ -381,7 +381,7 @@ function grandtour_body_class_names($classes) {
 	}
 	
 	//Check if boxed layout is enable
-	$tg_boxed = kirki_get_option('tg_boxed');
+	$tg_boxed = get_theme_mod('tg_boxed');
 	if((GRANDTOUR_THEMEDEMO && isset($_GET['boxed']) && !empty($_GET['boxed'])) OR !empty($tg_boxed))
 	{
 		$classes[] = esc_attr('tg_boxed');

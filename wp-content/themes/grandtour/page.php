@@ -75,7 +75,7 @@ if(empty($page_show_title))
     }
     
     //Check if add parallax effect
-	$tg_page_header_bg_parallax = kirki_get_option('tg_page_header_bg_parallax');
+	$tg_page_header_bg_parallax = get_theme_mod('tg_page_header_bg_parallax');
 	
 	//Check if enable content builder
 	$ppb_enable = get_post_meta($current_page_id, 'ppb_enable', true);
@@ -109,7 +109,7 @@ if(empty($page_show_title))
 	
 	<?php
 		//Check page title vertical alignment
-		$tg_page_title_vertical_alignment = kirki_get_option('tg_page_title_vertical_alignment');
+		$tg_page_title_vertical_alignment = get_theme_mod('tg_page_title_vertical_alignment');
 		if($tg_page_title_vertical_alignment == 'center')
 		{	
 	?>
