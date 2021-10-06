@@ -29,6 +29,7 @@ if ( ! class_exists( 'EIO_Page_Parser' ) ) {
 			'jpe',
 			'png',
 			'svg',
+			'webp',
 		);
 
 		/**
@@ -49,15 +50,15 @@ if ( ! class_exists( 'EIO_Page_Parser' ) ) {
 			$unquoted_images = array();
 
 			$unquoted_pattern = '';
-			$search_pattern   = '#(?P<img_tag><img\s[^>]*?>)#is';
+			$search_pattern   = '#(?P<img_tag><img\s[^\\\\>]*?>)#is';
 			if ( $hyperlinks ) {
 				$this->debug_message( 'using figure+hyperlink(a) patterns with src required' );
-				$search_pattern   = '#(?:<figure[^>]*?\s+?class\s*=\s*["\'](?P<figure_class>[\w\s-]+?)["\'][^>]*?>\s*)?(?:<a[^>]*?\s+?href\s*=\s*["\'](?P<link_url>[^\s]+?)["\'][^>]*?>\s*)?(?P<img_tag><img[^>]*?\s+?src\s*=\s*("|\')(?P<img_url>(?!\4).+?)\4[^>]*?>){1}(?:\s*</a>)?#is';
-				$unquoted_pattern = '#(?:<figure[^>]*?\s+?class\s*=\s*(?P<figure_class>[\w-]+)[^>]*?>\s*)?(?:<a[^>]*?\s+?href\s*=\s*(?P<link_url>[^"\'\\\\][^\s>]+)[^>]*?>\s*)?(?P<img_tag><img[^>]*?\s+?src\s*=\s*(?P<img_url>[^"\'\\\\][^\s>]+)[^>]*?>){1}(?:\s*</a>)?#is';
+				$search_pattern   = '#(?:<figure[^>]*?\s+?class\s*=\s*["\'](?P<figure_class>[\w\s-]+?)["\'][^>]*?>\s*)?(?:<a[^>]*?\s+?href\s*=\s*["\'](?P<link_url>[^\s]+?)["\'][^>]*?>\s*)?(?P<img_tag><img[^>]*?\s+?src\s*=\s*("|\')(?P<img_url>(?!\4)[^\\\\]+?)\4[^>]*?>){1}(?:\s*</a>)?#is';
+				$unquoted_pattern = '#(?:<figure[^>]*?\s+?class\s*=\s*(?P<figure_class>[\w-]+)[^>]*?>\s*)?(?:<a[^>]*?\s+?href\s*=\s*(?P<link_url>[^"\'\\\\<>][^\s<>]+)[^>]*?>\s*)?(?P<img_tag><img[^>]*?\s+?src\s*=\s*(?P<img_url>[^"\'\\\\<>][^\s\\\\<>]+)(?:\s[^>]*?)?>){1}(?:\s*</a>)?#is';
 			} elseif ( $src_required ) {
 				$this->debug_message( 'using plain img pattern, src still required' );
-				$search_pattern   = '#(?P<img_tag><img[^>]*?\s+?src\s*=\s*("|\')(?P<img_url>(?!\2).+?)\2[^>]*?>)#is';
-				$unquoted_pattern = '#(?P<img_tag><img[^>]*?\s+?src\s*=\s*(?P<img_url>[^"\'\\\\][^\s>]+)[^>]*?>)#is';
+				$search_pattern   = '#(?P<img_tag><img[^>]*?\s+?src\s*=\s*("|\')(?P<img_url>(?!\2)[^\\\\]+?)\2[^>]*?>)#is';
+				$unquoted_pattern = '#(?P<img_tag><img[^>]*?\s+?src\s*=\s*(?P<img_url>[^"\'\\\\<>][^\s\\\\<>]+)(?:\s[^>]*?)?>)#is';
 			}
 			if ( preg_match_all( $search_pattern, $content, $images ) ) {
 				$this->debug_message( 'found ' . count( $images[0] ) . ' image elements with quoted pattern' );
@@ -222,6 +223,36 @@ if ( ! class_exists( 'EIO_Page_Parser' ) ) {
 		}
 
 		/**
+		 * Get dimensions of a file from the URL.
+		 *
+		 * @param string $url The URL of the image.
+		 * @return array The width and height, in pixels.
+		 */
+		function get_image_dimensions_by_url( $url ) {
+			$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
+			$this->debug_message( "getting dimensions for $url" );
+
+			list( $width, $height ) = $this->get_dimensions_from_filename( $url, ! empty( $this->parsing_exactdn ) );
+			if ( empty( $width ) || empty( $height ) ) {
+				// Couldn't get it from the URL directly, see if we can get the actual filename.
+				$file = false;
+				if ( $this->allowed_urls && $this->allowed_domains ) {
+					$file = $this->cdn_to_local( $url );
+				}
+				if ( ! $file ) {
+					$file = $this->url_to_path_exists( $url );
+				}
+				if ( $file && $this->is_file( $file ) ) {
+					list( $width, $height ) = wp_getimagesize( $file );
+				}
+			}
+			$width  = $width && is_numeric( $width ) ? (int) $width : false;
+			$height = $height && is_numeric( $height ) ? (int) $height : false;
+
+			return array( $width, $height );
+		}
+
+		/**
 		 * Get the width from an image element.
 		 *
 		 * @param string $img The full image element.
@@ -332,7 +363,7 @@ if ( ! class_exists( 'EIO_Page_Parser' ) ) {
 			$value   = trim( $value );
 			if ( $replace ) {
 				// Don't forget, back references cannot be used in character classes.
-				$new_element = preg_replace( '#\s' . $name . '\s*=\s*("|\')(?!\1).*?\1#is', " $name=$1$value$1", $element );
+				$new_element = preg_replace( '#\s' . $name . '\s*=\s*("|\')(?!\1).*?\1#is', ' ' . $name . '=${1}' . $value . '${1}', $element );
 				if ( strpos( $new_element, "$name=" ) && $new_element !== $element ) {
 					$element = $new_element;
 					return;

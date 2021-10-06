@@ -7729,25 +7729,10 @@
 				placeholder:		this.get('placeholder'),
 				multiple:			this.get('multiple'),
 				data:				[],
-				escapeMarkup:		function( markup ) {
-					if (typeof markup !== 'string') {
-						return markup;
-					}
-					return acf.escHtml( markup ); 
-				}
+				escapeMarkup:		function( string ){ 
+					return acf.escHtml( string ); 
+				},
 			};
-
-			// Only use the template if SelectWoo is not loaded to work around https://github.com/woocommerce/woocommerce/pull/30473
-			if ( ! acf.isset(window, 'jQuery', 'fn', 'selectWoo') ) {
-
-				options.templateSelection = function( selection ) {
-					var $selection = $('<span class="acf-selection"></span>');
-					$selection.html( acf.escHtml( selection.text ) );
-					$selection.data('element', selection.element);
-					return $selection;
-				};
-
-			}
 			
 			// multiple
 			if( options.multiple ) {
@@ -7803,12 +7788,8 @@
 			            // loop
 			            $ul.find('.select2-selection__choice').each(function() {
 				            
-				            // Attempt to use .data if it exists (select2 version < 4.0.6) or use our template data instead.
-							if ( $(this).data('data') ) {
-								var $option = $( $(this).data('data').element );
-							} else {
-								var $option = $( $(this).children('span.acf-selection').data('element') );
-							}
+				            // vars
+							var $option = $( $(this).data('data').element );
 							
 							// detach and re-append to end
 							$option.detach().appendTo( $select );
@@ -9675,7 +9656,7 @@
 			var lastPostStatus = '';
 			wp.data.subscribe(function() {
 				var postStatus = editorSelect.getEditedPostAttribute( 'status' );
-				useValidation = ( postStatus === 'publish' || postStatus === 'future' );
+				useValidation = ( postStatus === 'publish' );
 				lastPostStatus = ( postStatus !== 'publish' ) ? postStatus : lastPostStatus;
 			});
 
@@ -9695,7 +9676,7 @@
 						return resolve( 'Validation ignored (autosave).' );
 					}
 
-					// Bail early if validation is not needed.
+					// Bail early if validation is not neeed.
 					if( !useValidation ) {
 						return resolve( 'Validation ignored (draft).' );
 					}
@@ -9747,8 +9728,6 @@
 					}
 				}).then(function(){
 					return savePost.apply(_this, _args);
-				}).catch(function(err){
-					// Nothing to do here, user is alerted of validation issues.
 				});
 			};
 		}

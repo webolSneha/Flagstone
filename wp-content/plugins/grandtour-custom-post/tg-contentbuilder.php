@@ -1012,7 +1012,7 @@ function ppb_gallery_grid_func($atts, $content) {
 			$image_caption = get_post_field('post_excerpt', $image);
 			$image_alt = get_post_meta($image, '_wp_attachment_image_alt', true);
 			
-			$tg_lightbox_enable_caption = kirki_get_option('tg_lightbox_enable_caption');
+			$tg_lightbox_enable_caption = get_theme_mod('tg_lightbox_enable_caption');
 			
 			$return_html.= '<div class="element grid  ' .esc_attr($grid_wrapper_class).'">';
 			$return_html.= '<div class="'.esc_attr($column_class).' static filterable gallery_type animated'.esc_attr($key+1).'">';
@@ -1051,24 +1051,24 @@ function ppb_gallery_grid_func($atts, $content) {
 			switch($columns)
 			{
 				case 1:
-					$tg_gallery_pagination = kirki_get_option('tg_gallery_pagination_one');
+					$tg_gallery_pagination = get_theme_mod('tg_gallery_pagination_one');
 				break;
 				
 				case 2:
 				default:
-					$tg_gallery_pagination = kirki_get_option('tg_gallery_pagination_two');
+					$tg_gallery_pagination = get_theme_mod('tg_gallery_pagination_two');
 				break;
 				
 				case 3:
-					$tg_gallery_pagination = kirki_get_option('tg_gallery_pagination_three');
+					$tg_gallery_pagination = get_theme_mod('tg_gallery_pagination_three');
 				break;
 				
 				case 4:
-					$tg_gallery_pagination = kirki_get_option('tg_gallery_pagination_four');
+					$tg_gallery_pagination = get_theme_mod('tg_gallery_pagination_four');
 				break;
 				
 				case 5:
-					$tg_gallery_pagination = kirki_get_option('tg_gallery_pagination_five');
+					$tg_gallery_pagination = get_theme_mod('tg_gallery_pagination_five');
 				break;
 			}
 			
@@ -3414,7 +3414,7 @@ function ppb_tour_search_func($atts, $content) {
     	</div>';
     	
     //Check if enable advanced search
-	$tg_tour_advanced_search = kirki_get_option('tg_tour_advanced_search');
+	$tg_tour_advanced_search = get_theme_mod('tg_tour_advanced_search');
 	
 	if(!empty($tg_tour_advanced_search))
 	{
@@ -3469,7 +3469,7 @@ function ppb_tour_search_func($atts, $content) {
 	    	</div>';
 	    	
 		//Display max budget field
-		$tg_tour_currency = kirki_get_option('tg_tour_currency');
+		$tg_tour_currency = get_theme_mod('tg_tour_currency');
 		
 		$return_html.= '<div class="one_fourth themeborder">
 	    		<input id="budget" name="budget" type="text" placeholder="'.esc_html__('Max budget ex. 500', 'grandtour-custom-post' ).'"/>
@@ -3669,7 +3669,7 @@ function ppb_tour_search_background_func($atts, $content) {
     	</div>';
     	
 	//Check if enable advanced search
-	$tg_tour_advanced_search = kirki_get_option('tg_tour_advanced_search');
+	$tg_tour_advanced_search = get_theme_mod('tg_tour_advanced_search');
 	
 	if(!empty($tg_tour_advanced_search))
 	{
@@ -3724,7 +3724,7 @@ function ppb_tour_search_background_func($atts, $content) {
 	    	</div>';
 	    	
 		//Display max budget field
-		$tg_tour_currency = kirki_get_option('tg_tour_currency');
+		$tg_tour_currency = get_theme_mod('tg_tour_currency');
 		
 		$return_html.= '<div class="one_fourth themeborder">
 	    		<input id="budget" name="budget" type="text" placeholder="'.esc_html__('Max budget ex. 500', 'grandtour-custom-post' ).'"/>
@@ -3920,7 +3920,7 @@ function ppb_tour_search_youtube_func($atts, $content) {
     	</div>';
     	
     //Check if enable advanced search
-	$tg_tour_advanced_search = kirki_get_option('tg_tour_advanced_search');
+	$tg_tour_advanced_search = get_theme_mod('tg_tour_advanced_search');
 	
 	if(!empty($tg_tour_advanced_search))
 	{
@@ -3975,7 +3975,7 @@ function ppb_tour_search_youtube_func($atts, $content) {
 	    	</div>';
 	    	
 		//Display max budget field
-		$tg_tour_currency = kirki_get_option('tg_tour_currency');
+		$tg_tour_currency = get_theme_mod('tg_tour_currency');
 		
 		$return_html.= '<div class="one_fourth themeborder">
 	    		<input id="budget" name="budget" type="text" placeholder="'.esc_html__('Max budget ex. 500', 'grandtour-custom-post' ).'"/>
@@ -4171,7 +4171,7 @@ function ppb_tour_search_vimeo_func($atts, $content) {
     	</div>';
     	
 	//Check if enable advanced search
-	$tg_tour_advanced_search = kirki_get_option('tg_tour_advanced_search');
+	$tg_tour_advanced_search = get_theme_mod('tg_tour_advanced_search');
 	
 	if(!empty($tg_tour_advanced_search))
 	{
@@ -4226,7 +4226,7 @@ function ppb_tour_search_vimeo_func($atts, $content) {
 	    	</div>';
 	    	
 		//Display max budget field
-		$tg_tour_currency = kirki_get_option('tg_tour_currency');
+		$tg_tour_currency = get_theme_mod('tg_tour_currency');
 		
 		$return_html.= '<div class="one_fourth themeborder">
 	    		<input id="budget" name="budget" type="text" placeholder="'.esc_html__('Max budget ex. 500', 'grandtour-custom-post' ).'"/>

@@ -1,0 +1,2 @@
+[06-Oct-2021 11:24:07 UTC] PHP Warning:  Trying to access array offset on value of type int in C:\xampp\htdocs\fst_production\wp-content\themes\grandtour\lib\custom.lib.php on line 706
+[06-Oct-2021 11:24:09 UTC] PHP Warning:  Trying to access array offset on value of type int in C:\xampp\htdocs\fst_production\wp-content\themes\grandtour\lib\custom.lib.php on line 706

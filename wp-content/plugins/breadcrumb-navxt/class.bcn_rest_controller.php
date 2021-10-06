@@ -61,11 +61,11 @@ class bcn_rest_controller
 	 * @param string $endpoint The endpoint name passed into the bcn_register_rest_endpoint filter
 	 * @return boolean True on success, false on error.
 	 */
-	protected function register_rest_route($namespace, $route, $args = array(), $override = false, $endpoint)
+	protected function register_rest_route($namespace, $route, $override = false, $endpoint=false,$args = array())
 	{
 		if(apply_filters('bcn_register_rest_endpoint', false, $endpoint, $this::version, $this->methods))
 		{
-			return register_rest_route($namespace, $route, $args, $override);
+			return register_rest_route($namespace, $route,  $override ,$args);
 		}
 		return false;
 	}

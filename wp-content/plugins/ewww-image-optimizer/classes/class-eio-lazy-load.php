@@ -33,6 +33,14 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 		protected $user_element_exclusions = array();
 
 		/**
+		 * A list of user-defined inclusions to lazy load for "external" CSS background images.
+		 *
+		 * @access protected
+		 * @var array $css_element_inclusions
+		 */
+		protected $css_element_inclusions = array();
+
+		/**
 		 * Base64-encoded placeholder image.
 		 *
 		 * @access protected
@@ -69,8 +77,24 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 		 */
 		function __construct() {
 			parent::__construct( __FILE__ );
+			$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
+
+			$uri = add_query_arg( null, null );
+			$this->debug_message( "request uri is $uri" );
+
+			add_filter( 'eio_do_lazyload', array( $this, 'should_process_page' ), 10, 2 );
+
+			/**
+			 * Allow pre-empting Lazy Load by page.
+			 *
+			 * @param bool Whether to parse the page for images to lazy load, default true.
+			 * @param string $uri The URL of the page.
+			 */
+			if ( ! apply_filters( 'eio_do_lazyload', true, $uri ) ) {
+				return;
+			}
+
 			$this->piip_folder = $this->content_dir . 'lazy/';
-			$this->debug_message( 'firing up lazy load' );
 			global $eio_lazy_load;
 			if ( is_object( $eio_lazy_load ) ) {
 				$this->debug_message( 'you are doing it wrong' );
@@ -87,12 +111,18 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 
 			add_filter( 'vc_get_vc_grid_data_response', array( $this, 'filter_page_output' ) );
 
+			// Filter for FacetWP JSON responses.
+			add_filter( 'facetwp_render_output', array( $this, 'filter_facetwp_json_output' ) );
+
 			if ( class_exists( 'ExactDN' ) && $this->get_option( $this->prefix . 'exactdn' ) ) {
 				global $exactdn;
 				$this->exactdn_domain = $exactdn->get_exactdn_domain();
 				if ( $this->exactdn_domain ) {
 					$this->parsing_exactdn = true;
 					$this->debug_message( 'parsing an exactdn page' );
+					$this->allowed_urls[] = 'https://' . $this->exactdn_domain;
+					$this->allowed_urls[] = 'http://' . $this->exactdn_domain;
+					$this->allowed_urls[] = '//' . $this->exactdn_domain;
 				}
 				$this->allow_lqip = false;
 				if ( $exactdn->get_plan_id() > 1 ) {
@@ -100,18 +130,17 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 				}
 			}
 
-			if ( $this->parsing_exactdn ) {
-				$this->allow_piip = true;
-			} elseif ( ! is_dir( $this->piip_folder ) ) {
-				$this->allow_piip = wp_mkdir_p( $this->piip_folder ) && $this->gd_support();
+			if ( ! is_dir( $this->piip_folder ) ) {
+				$this->allow_piip = wp_mkdir_p( $this->piip_folder ) && ( $this->gd_support() || $this->imagick_support() );
 			} else {
-				$this->allow_piip = is_writable( $this->piip_folder ) && $this->gd_support();
+				$this->allow_piip = is_writable( $this->piip_folder ) && ( $this->gd_support() || $this->imagick_support() );
 			}
 
-			if ( ! apply_filters( 'wp_lazy_loading_enabled', true, 'img', '' ) ) {
-				define( 'EWWWIO_DISABLE_NATIVE_LAZY', true );
+			add_filter( 'wp_lazy_loading_enabled', array( $this, 'wp_lazy_loading_enabled' ), 10, 2 );
+
+			if ( ! defined( 'EIO_LL_AUTOSCALE' ) && ! $this->get_option( $this->prefix . 'll_autoscale' ) ) {
+				define( 'EIO_LL_AUTOSCALE', false );
 			}
-			add_filter( 'wp_lazy_loading_enabled', '__return_false' );
 
 			// Filter early, so that others at the default priority take precendence.
 			add_filter( 'eio_use_piip', array( $this, 'maybe_piip' ), 9 );
@@ -123,22 +152,133 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 			// Load the appropriate JS.
 			if ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) {
 				// Load the non-minified and separate versions of the lazy load scripts.
-				add_action( 'wp_enqueue_scripts', array( $this, 'debug_script' ) );
+				add_action( 'wp_enqueue_scripts', array( $this, 'debug_script' ), 1 );
 			} else {
 				// Load the minified, combined version of the lazy load script.
-				add_action( 'wp_enqueue_scripts', array( $this, 'min_script' ) );
+				// add_action( 'wp_head', array( $this, 'inline_script' ), 1 );
+				// Load the minified, combined version of the lazy load script.
+				add_action( 'wp_enqueue_scripts', array( $this, 'min_script' ), 1 );
 			}
 			$this->validate_user_exclusions();
+			$this->validate_css_element_inclusions();
+			$this->get_allowed_domains();
 		}
 
 		/**
-		 * Replaces images within a srcset attribute, just a placeholder at the moment.
+		 * Check if pages should be processed, especially for things like page builders.
 		 *
-		 * @param string $srcset A valid srcset attribute from an img element.
-		 * @return bool|string False if no changes were made, or the new srcset if any WebP images replaced the originals.
+		 * @since 6.2.2
+		 *
+		 * @param boolean $should_process Whether LL should process the page.
+		 * @param string  $uri The URI of the page (no domain or scheme included).
+		 * @return boolean True to process the page, false to skip.
 		 */
-		function srcset_replace( $srcset ) {
-			return $srcset;
+		function should_process_page( $should_process = true, $uri = '' ) {
+			// Don't foul up the admin side of things, unless a plugin needs to.
+			if ( is_admin() &&
+				/**
+				 * Provide plugins a way of running Lazy Load for images in the WordPress Admin, usually for admin-ajax.php.
+				 *
+				 * @param bool false Allow Lazy Load to run on the Dashboard. Default to false.
+				 */
+				false === apply_filters( 'eio_allow_admin_lazyload', false )
+			) {
+				$this->debug_message( 'is_admin' );
+				return false;
+			}
+			if ( empty( $uri ) ) {
+				$uri = add_query_arg( null, null );
+			}
+			if ( false !== strpos( $uri, '?brizy-edit' ) ) {
+				return false;
+			}
+			if ( false !== strpos( $uri, '&builder=true' ) ) {
+				return false;
+			}
+			if ( false !== strpos( $uri, 'cornerstone=' ) || false !== strpos( $uri, 'cornerstone-endpoint' ) ) {
+				return false;
+			}
+			if ( false !== strpos( $uri, 'ct_builder=' ) ) {
+				return false;
+			}
+			if ( false !== strpos( $uri, 'ct_render_shortcode=' ) || false !== strpos( $uri, 'action=oxy_render' ) ) {
+				return false;
+			}
+			if ( did_action( 'cornerstone_boot_app' ) || did_action( 'cs_before_preview_frame' ) ) {
+				return false;
+			}
+			if ( false !== strpos( $uri, 'elementor-preview=' ) ) {
+				return false;
+			}
+			if ( false !== strpos( $uri, 'et_fb=' ) ) {
+				return false;
+			}
+			if ( false !== strpos( $uri, 'fb-edit=' ) ) {
+				return false;
+			}
+			if ( false !== strpos( $uri, '?fl_builder' ) ) {
+				return false;
+			}
+			if ( '/print/' === substr( $uri, -7 ) ) {
+				return false;
+			}
+			if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+				return false;
+			}
+			if ( false !== strpos( $uri, 'tatsu=' ) ) {
+				return false;
+			}
+			if ( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === sanitize_text_field( wp_unslash( $_POST['action'] ) ) ) { // phpcs:ignore WordPress.Security.NonceVerification
+				return false;
+			}
+			if ( is_customize_preview() ) {
+				$this->debug_message( 'is_customize_preview' );
+				return false;
+			}
+			global $wp_query;
+			if ( ! isset( $wp_query ) || ! ( $wp_query instanceof WP_Query ) ) {
+				return $should_process;
+			}
+			if ( ! did_action( 'parse_query' ) ) {
+				return $should_process;
+			}
+			if ( $this->is_amp() ) {
+				return false;
+			}
+			if ( is_embed() ) {
+				$this->debug_message( 'is_embed' );
+				return false;
+			}
+			if ( is_feed() ) {
+				$this->debug_message( 'is_feed' );
+				return false;
+			}
+			if ( is_preview() ) {
+				$this->debug_message( 'is_preview' );
+				return false;
+			}
+			if ( wp_script_is( 'twentytwenty-twentytwenty', 'enqueued' ) ) {
+				$this->debug_message( 'twentytwenty enqueued' );
+				return false;
+			}
+			return $should_process;
+		}
+
+		/**
+		 * Disable native lazy load for img elements.
+		 *
+		 * @param bool   $default True if it is an img or iframe element. Should be false otherwise.
+		 * @param string $tag_name The type of HTML tag/element being parsed.
+		 * @return bool False for img elements, leave as-is for others.
+		 */
+		function wp_lazy_loading_enabled( $default, $tag_name = 'img' ) {
+			if ( 'img' === $tag_name ) {
+				if ( defined( 'EIO_ENABLE_NATIVE_LAZY' ) && EIO_ENABLE_NATIVE_LAZY ) {
+					return true;
+				}
+				return false;
+			}
+			return $default;
 		}
 
 		/**
@@ -149,99 +289,34 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 		 */
 		function filter_page_output( $buffer ) {
 			$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
-			// Don't foul up the admin side of things, unless a plugin needs to.
-			if ( is_admin() &&
-				/**
-				 * Provide plugins a way of running Lazy Load for images in the WordPress Dashboard (wp-admin).
-				 *
-				 * @param bool false Allow Lazy Load to run on the Dashboard. Default to false.
-				 */
-				false === apply_filters( 'eio_allow_admin_lazyload', false )
-			) {
-				$this->debug_message( 'is_admin' );
+			if ( empty( $buffer ) ) {
 				return $buffer;
 			}
-			// Don't lazy load in these cases...
-			$uri = add_query_arg( null, null );
-			$this->debug_message( "request uri is $uri" );
-			if (
-				empty( $buffer ) ||
-				strpos( $uri, 'cornerstone=' ) !== false ||
-				strpos( $uri, 'cornerstone-endpoint' ) !== false ||
-				strpos( $uri, 'ct_builder=' ) !== false ||
-				did_action( 'cornerstone_boot_app' ) || did_action( 'cs_before_preview_frame' ) ||
-				'/print/' === substr( $uri, -7 ) ||
-				strpos( $uri, 'elementor-preview=' ) !== false ||
-				strpos( $uri, 'et_fb=' ) !== false ||
-				strpos( $uri, '?fl_builder' ) !== false ||
-				strpos( $uri, 'tatsu=' ) !== false ||
-				( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === sanitize_text_field( wp_unslash( $_POST['action'] ) ) ) || // phpcs:ignore WordPress.Security.NonceVerification
-				! apply_filters( 'eio_do_lazyload', true ) ||
-				is_embed() ||
-				is_feed() ||
-				is_preview() ||
-				is_customize_preview() ||
-				( defined( 'REST_REQUEST' ) && REST_REQUEST ) ||
-				wp_script_is( 'twentytwenty-twentytwenty', 'enqueued' ) ||
-				preg_match( '/^<\?xml/', $buffer ) ||
-				strpos( $buffer, 'amp-boilerplate' ) ||
-				$this->is_amp()
-			) {
-				if ( empty( $buffer ) ) {
-					$this->debug_message( 'empty buffer' );
-				}
-				if ( strpos( $uri, 'cornerstone=' ) !== false || strpos( $uri, 'cornerstone-endpoint' ) !== false ) {
-					$this->debug_message( 'cornerstone editor' );
-				}
-				if ( strpos( $uri, 'ct_builder=' ) !== false ) {
-					$this->debug_message( 'oxygen builder' );
-				}
-				if ( did_action( 'cornerstone_boot_app' ) || did_action( 'cs_before_preview_frame' ) ) {
-					$this->debug_message( 'cornerstone app/preview' );
-				}
-				if ( '/print/' === substr( $uri, -7 ) ) {
-					$this->debug_message( 'print page template' );
-				}
-				if ( strpos( $uri, 'elementor-preview=' ) !== false ) {
-					$this->debug_message( 'elementor preview' );
-				}
-				if ( strpos( $uri, 'et_fb=' ) !== false ) {
-					$this->debug_message( 'et_fb' );
-				}
-				if ( strpos( $uri, '?fl_builder' ) !== false ) {
-					$this->debug_message( 'beaver builder' );
-				}
-				if ( strpos( $uri, 'tatsu=' ) !== false || ( ! empty( $_POST['action'] ) && 'tatsu_get_concepts' === $_POST['action'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification
-					$this->debug_message( 'tatsu' );
-				}
-				if ( ! apply_filters( 'eio_do_lazyload', true ) ) {
-					$this->debug_message( 'do_lazyload short-circuit' );
-				}
-				if ( is_embed() ) {
-					$this->debug_message( 'is_embed' );
-				}
-				if ( is_feed() ) {
-					$this->debug_message( 'is_feed' );
-				}
-				if ( is_preview() ) {
-					$this->debug_message( 'is_preview' );
-				}
-				if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
-					$this->debug_message( 'rest request' );
-				}
-				if ( wp_script_is( 'twentytwenty-twentytwenty', 'enqueued' ) ) {
-					$this->debug_message( 'twentytwenty enqueued' );
-				}
-				if ( preg_match( '/^<\?xml/', $buffer ) ) {
-					$this->debug_message( 'not html, xml tag found' );
-				}
-				if ( strpos( $buffer, 'amp-boilerplate' ) ) {
-					$this->debug_message( 'AMP page processing' );
-				}
-				if ( $this->is_amp() ) {
-					$this->debug_message( 'AMP page processing (is_amp)' );
-				}
+			if ( preg_match( '/^<\?xml/', $buffer ) ) {
+				$this->debug_message( 'not html, xml tag found' );
 				return $buffer;
+			}
+			if ( strpos( $buffer, 'amp-boilerplate' ) ) {
+				$this->debug_message( 'AMP page processing' );
+				return $buffer;
+			}
+			if ( $this->is_json( $buffer ) ) {
+				return $buffer;
+			}
+			if ( ! $this->should_process_page() ) {
+				return $buffer;
+			}
+
+			// If JS WebP isn't running, set ewww_webp_supported to false so we have something defined.
+			if ( ! class_exists( 'EIO_JS_Webp' ) ) {
+				$body_tags        = $this->get_elements_from_html( $buffer, 'body' );
+				$body_webp_script = '<script data-cfasync="false">var ewww_webp_supported=false;</script>';
+				if ( $this->is_iterable( $body_tags ) && ! empty( $body_tags[0] ) && false !== strpos( $body_tags[0], '<body' ) ) {
+					// Add the WebP script right after the opening tag.
+					$buffer = str_replace( $body_tags[0], $body_tags[0] . "\n" . $body_webp_script, $buffer );
+				} else {
+					$buffer = str_replace( '<body>', "<body>\n$body_webp_script", $buffer );
+				}
 			}
 
 			$above_the_fold   = apply_filters( 'eio_lazy_fold', 0 );
@@ -288,6 +363,24 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 					if ( ! $this->validate_image_tag( $picture ) ) {
 						continue;
 					}
+					$pimages = $this->get_images_from_html( $picture, false );
+					if ( ! empty( $pimages[0] ) && $this->is_iterable( $pimages[0] ) && ! empty( $pimages[0][0] ) ) {
+						$image = $pimages[0][0];
+						$file  = $pimages['img_url'][0];
+						$this->debug_message( "parsing an image (inside picture): $file" );
+						$this->debug_message( "the img tag: $image" );
+						if ( $this->validate_image_tag( $image ) ) {
+							$this->debug_message( 'found a valid image tag (inside picture)' );
+							$orig_img = $image;
+							$ns_img   = $image;
+							$image    = $this->parse_img_tag( $image, $file );
+							$this->set_attribute( $ns_img, 'data-eio', 'l', true );
+							$noscript = '<noscript>' . $ns_img . '</noscript>';
+							$picture  = str_replace( $orig_img, $image . $noscript, $picture );
+						}
+					} else {
+						continue;
+					}
 					$sources = $this->get_elements_from_html( $picture, 'source' );
 					if ( $this->is_iterable( $sources ) ) {
 						foreach ( $sources as $source ) {
@@ -300,48 +393,34 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 								$this->debug_message( 'found srcset in source' );
 								$lazy_source = $source;
 								$this->set_attribute( $lazy_source, 'data-srcset', $srcset );
-								$this->set_attribute( $lazy_source, 'srcset', $this->placeholder_src, true );
+								$this->remove_attribute( $lazy_source, 'srcset' );
 								$picture = str_replace( $source, $lazy_source, $picture );
 							}
 						}
 						if ( $picture !== $pictures[ $index ] ) {
-							$pimages = $this->get_images_from_html( $picture, false );
-							if ( ! empty( $pimages[0] ) && $this->is_iterable( $pimages[0] ) && ! empty( $pimages[0][0] ) ) {
-								$image = $pimages[0][0];
-								$file  = $pimages['img_url'][0];
-								$this->debug_message( "parsing an image: $file" );
-								$this->debug_message( "the img tag: $image" );
-								if ( $this->validate_image_tag( $image ) ) {
-									$this->debug_message( 'found a valid image tag (inside picture)' );
-									$orig_img = $image;
-									$ns_img   = $image;
-									$image    = $this->parse_img_tag( $image, $file );
-									$this->set_attribute( $ns_img, 'data-eio', 'l', true );
-									$noscript = '<noscript>' . $ns_img . '</noscript>';
-									$picture  = str_replace( $orig_img, $image . $noscript, $picture );
-									$this->debug_message( 'lazified sources for picture element' );
-									$buffer = str_replace( $pictures[ $index ], $picture, $buffer );
-								}
-							}
+							$this->debug_message( 'lazified sources for picture element' );
+							$buffer = str_replace( $pictures[ $index ], $picture, $buffer );
 						}
 					}
 				}
 			}
-			// Video elements, looking for poster attributes that are images.
-			/* $videos = $this->get_elements_from_html( $buffer, 'video' ); */
-			$videos = '';
-			if ( $this->is_iterable( $videos ) ) {
-				foreach ( $videos as $index => $video ) {
-					$this->debug_message( 'parsing a video element' );
-					$file = $this->get_attribute( $video, 'poster' );
-					if ( $file ) {
-						$this->debug_message( "checking webp for video poster: $file" );
-						if ( $this->validate_image_tag( $file ) ) {
-							$this->set_attribute( $video, 'data-poster-webp', $this->placeholder_src );
-							$this->set_attribute( $video, 'data-poster-image', $file );
-							$this->remove_attribute( $video, 'poster' );
-							$this->debug_message( "found webp for video poster: $file" );
-							$buffer = str_replace( $videos[ $index ], $video, $buffer );
+			// Iframe elements, looking for stuff like YouTube embeds.
+			if ( in_array( 'iframe', $this->user_element_exclusions, true ) ) {
+				$frames = '';
+			} else {
+				$frames = $this->get_elements_from_html( $buffer, 'iframe' );
+			}
+			if ( $this->is_iterable( $frames ) ) {
+				foreach ( $frames as $index => $frame ) {
+					$this->debug_message( 'parsing an iframe element' );
+					$url = $this->get_attribute( $frame, 'src' );
+					if ( $url && 0 === strpos( $url, 'http' ) && $this->validate_iframe_tag( $frame ) ) {
+						$this->debug_message( "lazifying iframe for: $url" );
+						$this->set_attribute( $frame, 'data-src', $url );
+						$this->remove_attribute( $frame, 'src' );
+						$this->set_attribute( $frame, 'class', trim( $this->get_attribute( $frame, 'class' ) . ' lazyload' ), true );
+						if ( $frame !== $frames[ $index ] ) {
+							$buffer = str_replace( $frames[ $index ], $frame, $buffer );
 						}
 					}
 				}
@@ -362,6 +441,7 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 			if ( ! $file ) {
 				$file = $this->get_attribute( $image, 'src' );
 			}
+			$file = str_replace( '&#038;', '&', esc_url( $file ) );
 			$this->set_attribute( $image, 'data-src', $file, true );
 			$srcset = $this->get_attribute( $image, 'srcset' );
 
@@ -381,87 +461,152 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 				return $image;
 			}
 
+			$physical_width  = false;
+			$physical_height = false;
 			$width_attr      = $this->get_attribute( $image, 'width' );
 			$height_attr     = $this->get_attribute( $image, 'height' );
+			// Can't use a relative width or height, so unset the dimensions in favor of not breaking things.
+			if ( false !== strpos( $width_attr, '%' ) || false !== strpos( $height_attr, '%' ) ) {
+				$width_attr  = false;
+				$height_attr = false;
+			}
 			$placeholder_src = $this->placeholder_src;
 
-			$disable_native_lazy = false;
-			// Ignore native lazy loading images.
-			$loading_attr = $this->get_attribute( $image, 'loading' );
-			if ( $loading_attr && in_array( trim( $loading_attr ), array( 'auto', 'eager', 'lazy' ), true ) ) {
-				$disable_native_lazy = true;
+			$insert_dimensions = false;
+			if ( apply_filters( 'eio_add_missing_width_height_attrs', $this->get_option( $this->prefix . 'add_missing_dims' ) ) && ( empty( $width_attr ) || empty( $height_attr ) ) ) {
+				$this->debug_message( 'missing width attr or height attr' );
+				list( $new_width_attr, $new_height_attr ) = $this->get_image_dimensions_by_url( $file );
+				if ( $new_width_attr && is_numeric( $new_width_attr ) && $new_height_attr && is_numeric( $new_height_attr ) ) {
+					$this->debug_message( "found $width_attr and $height_attr to insert (maybe)" );
+					if ( $width_attr && is_numeric( $width_attr ) && $width_attr < $new_width_attr ) { // Then $height_attr is empty...
+						$height_attr = round( ( $new_height_attr / $new_width_attr ) * $width_attr );
+						$this->debug_message( "width was set to $width_attr, height was empty, but now $height_attr" );
+					} elseif ( $height_attr && is_numeric( $height_attr ) && $height_attr < $new_height_attr ) { // Or $width_attr is empty...
+						$width_attr = round( ( $new_width_attr / $new_height_attr ) * $height_attr );
+						$this->debug_message( "height was set to $height_attr, width was empty, but now $width_attr" );
+					} else {
+						$width_attr  = $new_width_attr;
+						$height_attr = $new_height_attr;
+						$this->debug_message( 'both width and height were empty, filling for sure' );
+					}
+					$physical_width    = $new_width_attr;
+					$physical_height   = $new_height_attr;
+					$insert_dimensions = true;
+				}
 			}
-			if (
-				is_numeric( $width_attr ) && is_numeric( $height_attr ) &&
-				( ! defined( 'EWWWIO_DISABLE_NATIVE_LAZY' ) || ! EWWWIO_DISABLE_NATIVE_LAZY ) &&
-				( ! defined( 'EASYIO_DISABLE_NATIVE_LAZY' ) || ! EASYIO_DISABLE_NATIVE_LAZY ) &&
-				! $disable_native_lazy
+
+			$use_native_lazy = false;
+
+			$placeholder_types = array();
+			if ( $this->parsing_exactdn && $this->allow_lqip && apply_filters( 'eio_use_lqip', $this->get_option( $this->prefix . 'use_lqip' ), $file ) ) {
+				$placeholder_types[] = 'lqip';
+			}
+			if ( apply_filters( 'eio_use_siip', $this->get_option( $this->prefix . 'use_siip' ), $file ) ) {
+				$placeholder_types[] = 'siip';
+			}
+			if ( $this->parsing_exactdn && apply_filters( 'eio_use_piip', true, $file ) ) {
+				$placeholder_types[] = 'epip';
+			}
+			if ( $this->allow_piip && apply_filters( 'eio_use_piip', true, $file ) ) {
+				$placeholder_types[] = 'piip';
+			}
+
+			list( $filename_width, $filename_height ) = $this->get_dimensions_from_filename( $file, $this->parsing_exactdn );
+			if ( $filename_width && is_numeric( $filename_width ) && $filename_height && is_numeric( $filename_height ) ) {
+				$physical_width  = $filename_width;
+				$physical_height = $filename_height;
+			} elseif (
+				( ! $physical_width || ! $physical_height ) &&
+				$width_attr && is_numeric( $width_attr ) && $height_attr && is_numeric( $height_attr )
 			) {
-				$this->set_attribute( $image, 'loading', 'lazy' );
+					$physical_width  = $width_attr;
+					$physical_height = $height_attr;
 			}
+			foreach ( $placeholder_types as $placeholder_type ) {
+				switch ( $placeholder_type ) {
+					case 'lqip':
+						$this->debug_message( 'using lqip, maybe' );
+						if ( false === strpos( $file, 'nggid' ) && ! preg_match( '#\.svg(\?|$)#', $file ) && strpos( $file, $this->exactdn_domain ) ) {
+							$placeholder_src = add_query_arg( array( 'lazy' => 1 ), $file );
+							$use_native_lazy = true;
+							break 2;
+						}
+						break;
+					case 'siip':
+						$this->debug_message( 'trying siip' );
+						// Can't use a relative width or height, so unset the dimensions in favor of not breaking things.
+						if ( false !== strpos( $width_attr, '%' ) || false !== strpos( $height_attr, '%' ) ) {
+							break;
+						}
 
-			if ( false === strpos( $file, 'nggid' ) && ! preg_match( '#\.svg(\?|$)#', $file ) && $this->parsing_exactdn && strpos( $file, $this->exactdn_domain ) ) {
-				$this->debug_message( 'using lqip' );
-				list( $width, $height ) = $this->get_dimensions_from_filename( $file, true );
-				if ( $width && $height && $width < 201 && $height < 201 ) {
-					$placeholder_src = $exactdn->generate_url( $this->content_url . 'lazy/placeholder-' . $width . 'x' . $height . '.png' );
-				} elseif ( $this->allow_lqip && apply_filters( 'eio_use_lqip', $this->get_option( $this->prefix . 'use_lqip' ), $file ) ) {
-					$placeholder_src = add_query_arg( array( 'lazy' => 1 ), $file );
-				} elseif ( $width && $height ) {
-					$placeholder_src = $exactdn->generate_url( $this->content_url . 'lazy/placeholder-' . $width . 'x' . $height . '.png' );
-				} else {
-					$placeholder_src = add_query_arg( array( 'lazy' => 2 ), $file );
-				}
-			} elseif ( $this->allow_piip && $srcset && apply_filters( 'eio_use_piip', true, $file ) ) {
-				$this->debug_message( 'trying piip' );
-				// Get image dimensions for PNG placeholder.
-				list( $width, $height ) = $this->get_dimensions_from_filename( $file, $this->parsing_exactdn );
+						// Falsify them if empty.
+						$width_attr  = (int) $width_attr ? (int) $width_attr : false;
+						$height_attr = (int) $height_attr ? (int) $height_attr : false;
+						if ( $width_attr && $height_attr ) {
+							$placeholder_src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 $width_attr $height_attr'%3E%3C/svg%3E";
+							break 2;
+						}
+						break;
+					case 'epip':
+						$this->debug_message( 'using epip, maybe' );
+						if ( false === strpos( $file, 'nggid' ) && ! preg_match( '#\.svg(\?|$)#', $file ) && strpos( $file, $this->exactdn_domain ) ) {
+							if ( false === $filename_width || false === $filename_height ) {
+								$filename_width  = $width_attr;
+								$filename_height = $height_attr;
+							}
 
-				// Can't use a relative width or height, so unset the dimensions in favor of not breaking things.
-				if ( false !== strpos( $width_attr, '%' ) || false !== strpos( $height_attr, '%' ) ) {
-					$width_attr  = false;
-					$height_attr = false;
-				}
+							if ( $filename_width && $filename_height && $this->allow_piip ) {
+								$placeholder_src = $this->create_piip( $filename_width, $filename_height );
+								/* $placeholder_src = $exactdn->generate_url( $this->content_url . 'lazy/placeholder-' . $filename_width . 'x' . $filename_height . '.png' ); */
+								$use_native_lazy = true;
+								break 2;
+							} else {
+								$placeholder_src = add_query_arg( array( 'lazy' => 2 ), $file );
+								$use_native_lazy = true;
+								break 2;
+							}
+						}
+						break;
+					case 'piip':
+						$this->debug_message( 'trying piip' );
 
-				if ( false === $width || false === $height ) {
-					$width  = $width_attr;
-					$height = $height_attr;
-				}
+						if ( false === $filename_width || false === $filename_height ) {
+							$filename_width  = $width_attr;
+							$filename_height = $height_attr;
+						}
 
-				// Falsify them if empty.
-				$width  = $width ? (int) $width : false;
-				$height = $height ? (int) $height : false;
-				if ( $width && $height ) {
-					$this->debug_message( "creating piip of $width x $height" );
-					$placeholder_src = $this->create_piip( $width, $height );
-				}
-			} elseif ( apply_filters( 'eio_use_siip', true, $file ) ) {
-				$this->debug_message( 'trying siip' );
-				$width  = $width_attr;
-				$height = $height_attr;
-
-				// Can't use a relative width or height, so unset the dimensions in favor of not breaking things.
-				if ( false !== strpos( $width, '%' ) || false !== strpos( $height, '%' ) ) {
-					$width  = false;
-					$height = false;
-				}
-
-				// Falsify them if empty.
-				$width  = $width ? (int) $width : false;
-				$height = $height ? (int) $height : false;
-				if ( $width && $height ) {
-					$placeholder_src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 $width $height'%3E%3C/svg%3E";
+						// Falsify them if empty.
+						$filename_width  = (int) $filename_width ? (int) $filename_width : false;
+						$filename_height = (int) $filename_height ? (int) $filename_height : false;
+						if ( $filename_width && $filename_height ) {
+							$this->debug_message( "creating piip of $filename_width x $filename_height" );
+							$png_placeholder_src = $this->create_piip( $filename_width, $filename_height );
+							if ( $png_placeholder_src ) {
+								$placeholder_src = $png_placeholder_src;
+								$use_native_lazy = true;
+								break 2;
+							}
+						}
+						break;
+					default:
+						$this->debug_message( "what in the world is $placeholder_type?" );
 				}
 			}
 			$this->debug_message( "current placeholder is $placeholder_src" );
 
+			$placeholder_src = apply_filters( 'eio_lazy_placeholder', $placeholder_src, $image );
+
+			// Check for native lazy loading images.
+			$loading_attr = $this->get_attribute( $image, 'loading' );
+			if ( ( ! defined( 'EIO_DISABLE_NATIVE_LAZY' ) || ! EIO_DISABLE_NATIVE_LAZY ) && ! $loading_attr && $use_native_lazy ) {
+				$this->set_attribute( $image, 'loading', 'lazy' );
+			}
+
 			if ( $srcset ) {
-				$placeholder_src = apply_filters( 'eio_lazy_placeholder', $placeholder_src, $image );
 				if ( strpos( $placeholder_src, '64,R0lGOD' ) ) {
 					$this->set_attribute( $image, 'srcset', $placeholder_src, true );
 					$this->remove_attribute( $image, 'src' );
 				} else {
-					$placeholder_src = apply_filters( 'as3cf_get_asset', $placeholder_src );
 					$this->set_attribute( $image, 'src', $placeholder_src, true );
 					$this->remove_attribute( $image, 'srcset' );
 				}
@@ -481,7 +626,23 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 				$this->set_attribute( $image, 'src', $placeholder_src, true );
 			}
 
-			$this->set_attribute( $image, 'class', $this->get_attribute( $image, 'class' ) . ' lazyload', true );
+			$existing_class = $this->get_attribute( $image, 'class' );
+			if ( ! empty( $existing_class ) ) {
+				$this->set_attribute( $image, 'class', trim( $existing_class . ' lazyload' ), true );
+			} else {
+				$this->set_attribute( $image, 'class', 'lazyload', true );
+			}
+			if ( $insert_dimensions ) {
+				$this->debug_message( "setting width=$width_attr and height=$height_attr" );
+				$this->set_attribute( $image, 'width', $width_attr, true );
+				$this->set_attribute( $image, 'height', $height_attr, true );
+			}
+			if ( 0 === strpos( $placeholder_src, 'data:image/svg+xml' ) ) {
+				$this->set_attribute( $image, 'data-eio-rwidth', $physical_width, true );
+				$this->set_attribute( $image, 'data-eio-rheight', $physical_height, true );
+			}
+			$this->debug_message( 'lazified img element:' );
+			$this->debug_message( trim( $image ) );
 			return $image;
 		}
 
@@ -497,14 +658,12 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 			if ( in_array( $tag_type, $this->user_element_exclusions, true ) ) {
 				return $buffer;
 			}
-			$elements = $this->get_elements_from_html( $buffer, $tag_type );
+			$elements = $this->get_elements_from_html( preg_replace( '/<(noscript|script).*?\/\1>/s', '', $buffer ), $tag_type );
 			if ( $this->is_iterable( $elements ) ) {
 				foreach ( $elements as $index => $element ) {
 					$this->debug_message( "parsing a $tag_type" );
 					if ( false === strpos( $element, 'background:' ) && false === strpos( $element, 'background-image:' ) ) {
-						if ( 'div' === $tag_type ) {
-							$element = $this->lazify_element( $element );
-						}
+						$element = $this->lazify_element( $element );
 						if ( $element !== $elements[ $index ] ) {
 							$this->debug_message( "$tag_type lazified, replacing in html source" );
 							$buffer = str_replace( $elements[ $index ], $element, $buffer );
@@ -553,12 +712,40 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 			}
 			if ( false === strpos( $element, 'background:' ) && false === strpos( $element, 'background-image:' ) && false === strpos( $element, 'style=' ) ) {
 				if ( false !== strpos( $element, 'id=' ) || false !== strpos( $element, 'class=' ) ) {
-					if ( $this->validate_bgimage_tag( $element ) ) {
-						$this->set_attribute( $element, 'class', $this->get_attribute( $element, 'class' ) . ' lazyload', true );
+					foreach ( $this->css_element_inclusions as $inclusion ) {
+						if ( false !== strpos( $element, $inclusion ) && $this->validate_bgimage_tag( $element ) ) {
+							$this->set_attribute( $element, 'class', $this->get_attribute( $element, 'class' ) . ' lazyload', true );
+						}
 					}
 				}
 			}
 			return $element;
+		}
+
+		/**
+		 * Parse template data from FacetWP that will be included in JSON response.
+		 * https://facetwp.com/documentation/developers/output/facetwp_render_output/
+		 *
+		 * @param array $output The full array of FacetWP data.
+		 * @return array The FacetWP data with lazy loaded images.
+		 */
+		function filter_facetwp_json_output( $output ) {
+			$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
+			if ( empty( $output['template'] ) || ! is_string( $output['template'] ) ) {
+				$this->debug_message( 'no template data available' );
+				if ( $this->function_exists( 'print_r' ) ) {
+					$this->debug_message( print_r( $output, true ) );
+				}
+				return $output;
+			}
+
+			$template = $this->filter_page_output( $output['template'] );
+			if ( $template ) {
+				$this->debug_message( 'template data modified' );
+				$output['template'] = $template;
+			}
+
+			return $output;
 		}
 
 		/**
@@ -578,6 +765,7 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 						if (
 							'a' === $exclusion ||
 							'div' === $exclusion ||
+							'iframe' === $exclusion ||
 							'img' === $exclusion ||
 							'li' === $exclusion ||
 							'picture' === $exclusion ||
@@ -588,6 +776,31 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 							continue;
 						}
 						$this->user_exclusions[] = $exclusion;
+					}
+				}
+			}
+		}
+
+		/**
+		 * Validate the user-defined CSS element inclusions.
+		 */
+		function validate_css_element_inclusions() {
+			$user_inclusions = $this->get_option( $this->prefix . 'll_all_things' );
+			if ( ! empty( $user_inclusions ) ) {
+				if ( ! is_string( $user_inclusions ) ) {
+					return;
+				}
+				$user_inclusions = explode( ',', $user_inclusions );
+				if ( is_array( $user_inclusions ) ) {
+					foreach ( $user_inclusions as $inclusion ) {
+						if ( ! is_string( $inclusion ) ) {
+							continue;
+						}
+						$inclusion = trim( $inclusion );
+						if ( empty( $inclusion ) ) {
+							continue;
+						}
+						$this->css_element_inclusions[] = $inclusion;
 					}
 				}
 			}
@@ -641,6 +854,7 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 						'data-lazy-srcset=',
 						'data-lazyload=',
 						'data-lazysrc=',
+						'data-mk-image-src',
 						'data-no-lazy=',
 						'data-src=',
 						'data-srcset=',
@@ -699,6 +913,36 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 		}
 
 		/**
+		 * Checks if an iframe tag is allowed to be lazy loaded.
+		 *
+		 * @param string $tag The tag.
+		 * @return bool True if the tag is allowed, false otherwise.
+		 */
+		function validate_iframe_tag( $tag ) {
+			$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
+			$exclusions = apply_filters(
+				'eio_lazy_iframe_exclusions',
+				array_merge(
+					array(
+						'data-no-lazy=',
+						'lazyload',
+						'skip-lazy',
+						'vimeo',
+						'about:blank',
+					),
+					$this->user_exclusions
+				),
+				$tag
+			);
+			foreach ( $exclusions as $exclusion ) {
+				if ( false !== strpos( $tag, $exclusion ) ) {
+					return false;
+				}
+			}
+			return true;
+		}
+
+		/**
 		 * Build a PNG inline image placeholder.
 		 *
 		 * @param int $width The width of the placeholder image.
@@ -729,19 +973,41 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 			}
 
 			$piip_path = $this->piip_folder . 'placeholder-' . $width . 'x' . $height . '.png';
-			if ( $this->parsing_exactdn ) {
+			// Keep this in case folks really want external Easy IO CDN placeholders.
+			if ( defined( 'EIO_USE_EXTERNAL_PLACEHOLDERS' ) && EIO_USE_EXTERNAL_PLACEHOLDERS && $this->parsing_exactdn ) {
 				global $exactdn;
 				return $exactdn->generate_url( $this->content_url . 'lazy/placeholder-' . $width . 'x' . $height . '.png' );
 			} elseif ( ! is_file( $piip_path ) ) {
-				if ( $this->get_option( 'ewww_image_optimizer_cloud_key' ) && ! defined( 'EWWW_IMAGE_OPTIMIZER_DISABLE_API_PIP' ) ) {
+				// First try PIP generation via Imagick, as it is pretty efficient.
+				if ( $this->imagick_support() ) {
+					$placeholder = new Imagick();
+					$placeholder->newimage( $width, $height, 'transparent' );
+					$placeholder->setimageformat( 'PNG' );
+					$placeholder->stripimage();
+					$placeholder->writeimage( $piip_path );
+					$placeholder->clear();
+				}
+				// If that didn't work, and we have a premium service, use the API to generate the slimmest PIP available.
+				/* if ( $this->get_option( 'ewww_image_optimizer_cloud_key' ) && ! defined( 'EWWW_IMAGE_OPTIMIZER_DISABLE_API_PIP' ) ) { */
+				if (
+					! is_file( $piip_path ) &&
+					( $this->parsing_exactdn || $this->get_option( 'ewww_image_optimizer_cloud_key' ) ) &&
+					! defined( 'EWWW_IMAGE_OPTIMIZER_DISABLE_API_PIP' )
+				) {
 					$piip_location = "http://optimize.exactlywww.com/resize/lazy.php?width=$width&height=$height";
 					$piip_response = wp_remote_get( $piip_location );
 					if ( ! is_wp_error( $piip_response ) && is_array( $piip_response ) && ! empty( $piip_response['body'] ) ) {
+						$this->debug_message( "retrieved PIP from API, storing to $piip_path" );
 						file_put_contents( $piip_path, $piip_response['body'] );
 						clearstatcache();
 					}
 				}
-				if ( ! is_file( $piip_path ) && function_exists( 'ewwwio_check_memory_available' ) && ewwwio_check_memory_available( $memory_required + 500000 ) ) {
+				// Last shot, use GD and then optimize it with optipng/pngout if available.
+				if (
+					! is_file( $piip_path ) &&
+					$this->gd_support() &&
+					$this->check_memory_available( $width * $height * 4.8 ) // 4.8 = 24-bit or 3 bytes per pixel multiplied by a factor of 1.6 for extra wiggle room.
+				) {
 					$img   = imagecreatetruecolor( $width, $height );
 					$color = imagecolorallocatealpha( $img, 0, 0, 0, 127 );
 					imagefill( $img, 0, 0, $color );
@@ -756,7 +1022,10 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 			}
 			clearstatcache();
 			if ( is_file( $piip_path ) ) {
-				return $this->content_url . 'lazy/placeholder-' . $width . 'x' . $height . '.png';
+				if ( defined( 'EIO_USE_EXTERNAL_PLACEHOLDERS' ) && EIO_USE_EXTERNAL_PLACEHOLDERS ) {
+					return $this->content_url . 'lazy/placeholder-' . $width . 'x' . $height . '.png';
+				}
+				return 'data:image/png;base64,' . base64_encode( file_get_contents( $piip_path ) );
 			}
 			return $this->placeholder_src;
 		}
@@ -819,8 +1088,12 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 		 * Adds a small CSS block to hide lazyload elements for no-JS browsers.
 		 */
 		function no_js_css() {
+			if ( ! $this->should_process_page() ) {
+				return;
+			}
 			echo '<noscript><style>.lazyload[data-src]{display:none !important;}</style></noscript>';
-			echo '<style>.lazyload{background-image:none !important;}</style>';
+			// And this allows us to lazy load external/internal CSS background images.
+			echo '<style>.lazyload{background-image:none !important;}.lazyload:before{background-image:none !important;}</style>';
 		}
 
 		/**
@@ -828,25 +1101,35 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 		 */
 		function debug_script() {
 			$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
-			if ( $this->is_amp() ) {
+			if ( ! $this->should_process_page() ) {
 				return;
 			}
-			$plugin_file = constant( strtoupper( $this->prefix ) . 'PLUGIN_FILE' );
-			wp_enqueue_script( 'eio-lazy-load-pre', plugins_url( '/includes/lazysizes-pre.js', $plugin_file ), array(), $this->version );
-			wp_enqueue_script( 'eio-lazy-load', plugins_url( '/includes/lazysizes.js', $plugin_file ), array(), $this->version );
-			wp_enqueue_script( 'eio-lazy-load-post', plugins_url( '/includes/lazysizes-post.js', $plugin_file ), array(), $this->version );
-			wp_enqueue_script( 'eio-lazy-load-uvh', plugins_url( '/includes/ls.unveilhooks.js', $plugin_file ), array(), $this->version );
-			if ( defined( strtoupper( $this->prefix ) . 'LAZY_PRINT' ) && constant( strtoupper( $this->prefix ) . 'LAZY_PRINT' ) ) {
-				wp_enqueue_script( 'eio-lazy-load-print', plugins_url( '/includes/ls.print.js', $plugin_file ), array(), $this->version );
+			if ( ! defined( 'EIO_LL_FOOTER' ) ) {
+				define( 'EIO_LL_FOOTER', true );
 			}
-			wp_localize_script(
-				'eio-lazy-load',
-				'eio_lazy_vars',
-				array(
-					'exactdn_domain' => ( $this->parsing_exactdn ? $this->exactdn_domain : '' ),
-					'skip_autoscale' => ( defined( 'EIO_LL_AUTOSCALE' ) ? 1 : 0 ),
-				)
+			$plugin_file = constant( strtoupper( $this->prefix ) . 'PLUGIN_FILE' );
+			wp_enqueue_script( 'eio-lazy-load-pre', plugins_url( '/includes/lazysizes-pre.js', $plugin_file ), array(), $this->version, EIO_LL_FOOTER );
+			wp_enqueue_script( 'eio-lazy-load-uvh', plugins_url( '/includes/ls.unveilhooks.js', $plugin_file ), array(), $this->version, EIO_LL_FOOTER );
+			wp_enqueue_script( 'eio-lazy-load-post', plugins_url( '/includes/lazysizes-post.js', $plugin_file ), array(), $this->version, EIO_LL_FOOTER );
+			wp_enqueue_script( 'eio-lazy-load', plugins_url( '/includes/lazysizes.js', $plugin_file ), array(), $this->version, EIO_LL_FOOTER );
+			if ( defined( strtoupper( $this->prefix ) . 'LAZY_PRINT' ) && constant( strtoupper( $this->prefix ) . 'LAZY_PRINT' ) ) {
+				wp_enqueue_script( 'eio-lazy-load-print', plugins_url( '/includes/ls.print.js', $plugin_file ), array(), $this->version, EIO_LL_FOOTER );
+			}
+			$threshold = defined( 'EIO_LL_THRESHOLD' ) && EIO_LL_THRESHOLD ? EIO_LL_THRESHOLD : 0;
+			wp_add_inline_script(
+				'eio-lazy-load-pre',
+				'var eio_lazy_vars = ' .
+					wp_json_encode(
+						array(
+							'exactdn_domain' => ( $this->parsing_exactdn ? $this->exactdn_domain : '' ),
+							'skip_autoscale' => ( defined( 'EIO_LL_AUTOSCALE' ) && ! EIO_LL_AUTOSCALE ? 1 : 0 ),
+							'threshold'      => (int) $threshold > 50 ? (int) $threshold : 0,
+						)
+					)
+					. ';',
+				'before'
 			);
+			return;
 		}
 
 		/**
@@ -854,22 +1137,66 @@ if ( ! class_exists( 'EIO_Lazy_Load' ) ) {
 		 */
 		function min_script() {
 			$this->debug_message( '<b>' . __METHOD__ . '()</b>' );
-			if ( $this->is_amp() ) {
+			if ( ! $this->should_process_page() ) {
 				return;
 			}
-			$plugin_file = constant( strtoupper( $this->prefix ) . 'PLUGIN_FILE' );
-			wp_enqueue_script( 'eio-lazy-load', plugins_url( '/includes/lazysizes.min.js', $plugin_file ), array(), $this->version );
-			if ( defined( strtoupper( $this->prefix ) . 'LAZY_PRINT' ) && constant( strtoupper( $this->prefix ) . 'LAZY_PRINT' ) ) {
-				wp_enqueue_script( 'eio-lazy-load-print', plugins_url( '/includes/ls.print.min.js', $plugin_file ), array(), $this->version );
+			if ( ! defined( 'EIO_LL_FOOTER' ) ) {
+				define( 'EIO_LL_FOOTER', true );
 			}
-			wp_localize_script(
+			$plugin_file = constant( strtoupper( $this->prefix ) . 'PLUGIN_FILE' );
+			wp_enqueue_script( 'eio-lazy-load', plugins_url( '/includes/lazysizes.min.js', $plugin_file ), array(), $this->version, EIO_LL_FOOTER );
+			if ( defined( strtoupper( $this->prefix ) . 'LAZY_PRINT' ) && constant( strtoupper( $this->prefix ) . 'LAZY_PRINT' ) ) {
+				wp_enqueue_script( 'eio-lazy-load-print', plugins_url( '/includes/ls.print.min.js', $plugin_file ), array(), $this->version, EIO_LL_FOOTER );
+			}
+			$threshold = defined( 'EIO_LL_THRESHOLD' ) && EIO_LL_THRESHOLD ? EIO_LL_THRESHOLD : 0;
+			wp_add_inline_script(
 				'eio-lazy-load',
-				'eio_lazy_vars',
-				array(
-					'exactdn_domain' => ( $this->parsing_exactdn ? $this->exactdn_domain : '' ),
-					'skip_autoscale' => ( defined( 'EIO_LL_AUTOSCALE' ) ? 1 : 0 ),
-				)
+				'var eio_lazy_vars = ' .
+					wp_json_encode(
+						array(
+							'exactdn_domain' => ( $this->parsing_exactdn ? $this->exactdn_domain : '' ),
+							'skip_autoscale' => ( defined( 'EIO_LL_AUTOSCALE' ) && ! EIO_LL_AUTOSCALE ? 1 : 0 ),
+							'threshold'      => (int) $threshold > 50 ? (int) $threshold : 0,
+						)
+					)
+					. ';',
+				'before'
 			);
+			return;
+		}
+		/**
+		 * Load minified inline version of lazysizes script.
+		 */
+		function inline_script() {
+			if ( ! $this->should_process_page() ) {
+				return;
+			}
+			$this->debug_message( 'inlining lazysizes script' );
+			// Load up the minified script.
+			$lazysizes_file = constant( strtoupper( $this->prefix ) . 'PLUGIN_PATH' ) . 'includes/lazysizes.min.js';
+			if ( ! $this->is_file( $lazysizes_file ) ) {
+				return;
+			}
+			$threshold        = defined( 'EIO_LL_THRESHOLD' ) && EIO_LL_THRESHOLD ? EIO_LL_THRESHOLD : 0;
+			$lazysizes_script = 'var eio_lazy_vars = ' .
+					wp_json_encode(
+						array(
+							'exactdn_domain' => ( $this->parsing_exactdn ? $this->exactdn_domain : '' ),
+							'skip_autoscale' => ( defined( 'EIO_LL_AUTOSCALE' ) && ! EIO_LL_AUTOSCALE ? 1 : 0 ),
+							'threshold'      => (int) $threshold > 50 ? (int) $threshold : 0,
+						)
+					)
+					. ';';
+
+			$lazysizes_script .= file_get_contents( $lazysizes_file );
+			echo '<script data-cfasync="false" type="text/javascript" id="eio-lazy-load">' . $lazysizes_script . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+			if ( defined( strtoupper( $this->prefix ) . 'LAZY_PRINT' ) && constant( strtoupper( $this->prefix ) . 'LAZY_PRINT' ) ) {
+				$lsprint_file = constant( strtoupper( $this->prefix ) . 'PLUGIN_PATH' ) . 'includes/ls.print.min.js';
+				if ( $this->is_file( $lsprint_file ) ) {
+					$lsprint_script = file_get_contents( $lsprint_file );
+					echo '<script data-cfasync="false" id="eio-lazy-load-print">' . $lsprint_script . '</script>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
+				}
+			}
 		}
 	}
 }
